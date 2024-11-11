@@ -44,6 +44,7 @@ body {
     width: calc(100% - 40px);
     max-width: inherit;
     margin: 0 auto;
+    margin-top:10px;
     box-sizing: border-box;
 }
 
@@ -183,4 +184,11 @@ body {
 
 .results-list li:last-child {
   border-bottom: none;
+}
+
+.results-container svg {
+  margin-top: 20px;
+  background-color: var(--secondary-bg);
+  border-radius: 4px;
+  padding: 10px;
 }

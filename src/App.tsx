@@ -3,6 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { FontAwesomeIcon } from './fontawesome';
 import { Switch, FormControlLabel } from '@mui/material';
 import './App.css';
+import { Timeline } from './components/Timeline';
 
 interface Clip {
   POSITION: number;
@@ -26,19 +27,27 @@ export async function parseRppFile(file: File, verbose: boolean): Promise<Clip[]
       currentClip.IGUID = line.split(' ')[1];
     } else if (line.startsWith('POSITION')) {
       currentClip.POSITION = parseFloat(line.split(' ')[1]);
+    } else if (line.startsWith('LENGTH')) {
+      currentClip.LENGTH = parseFloat(line.split(' ')[1]);
     } else if (line.startsWith('>')) {
-      if (currentClip.IGUID && currentClip.POSITION !== undefined) {
+      if (currentClip.IGUID && currentClip.POSITION !== undefined && currentClip.LENGTH !== undefined) {
         clips.push(currentClip as Clip);
       }
     }
   }
 
-  verbose && console.log('Parsed Clips:');
-  verbose && clips.forEach(clip => {
-    console.log(`IGUID: ${clip.IGUID}, Position: ${clip.POSITION}`);
-  });
+  const uniqueClips = clips.reduce((acc, current) => {
+    const x = acc.find(item => item.IGUID === current.IGUID);
+    if (!x) {
+      return acc.concat([current]);
+    } else {
+      return acc;
+    }
+  }, [] as Clip[]);
 
-  return clips;
+  verbose && console.log('Parsed Clips (unique):', uniqueClips);
+
+  return uniqueClips;
 }
 
 export async function detectChanges(controlFile: File, revisedFile: File, verbose: boolean): Promise<number[]> {
@@ -73,6 +82,8 @@ export default function App() {
   const [controlFile, setControlFile] = useState<File | null>(null);
   const [revisedFile, setRevisedFile] = useState<File | null>(null);
   const [results, setResults] = useState<number[] | null>(null);
+  const [controlClips, setControlClips] = useState<Clip[]>([]);
+  const [revisedClips, setRevisedClips] = useState<Clip[]>([]);
 
   const onDropControl = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length === 1) {
@@ -93,6 +104,12 @@ export default function App() {
     }
 
     try {
+      const control = await parseRppFile(controlFile, verbose);
+      const revised = await parseRppFile(revisedFile, verbose);
+      console.log('Setting clips:', { control, revised });
+      setControlClips(control);
+      setRevisedClips(revised);
+      
       const changedTimecodes = await detectChanges(controlFile, revisedFile, verbose);
       setResults(changedTimecodes);
       console.log("Changed timecodes:", changedTimecodes);
@@ -186,6 +203,12 @@ export default function App() {
             {results !== null && (
                 <div className="results-container">
                     <h2>Results</h2>
+                    <Timeline 
+                      controlClips={controlClips}
+                      revisedClips={revisedClips}
+                      width={1000}
+                      height={120}
+                    />
                     {results.length > 0 ? (
                         <div className="results-list">
                             <p>Found {results.length} changed position{results.length !== 1 ? 's' : ''}:</p>
@@ -196,7 +219,7 @@ export default function App() {
                             </ul>
                         </div>
                     ) : (
-                        <p>No changes detected</p>
+                        <p>No changes detected !</p>
                     )}
                 </div>
             )}
