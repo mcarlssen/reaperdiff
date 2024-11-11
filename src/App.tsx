@@ -45,26 +45,27 @@ export async function detectChanges(controlFile: File, revisedFile: File, verbos
   const controlClips = await parseRppFile(controlFile, verbose);
   const revisedClips = await parseRppFile(revisedFile, verbose);
 
-  verbose && console.log('\nComparing Files:');
-  verbose && console.log('Control File Clips:', controlClips.length);
-  verbose && console.log('Revised File Clips:', revisedClips.length);
+  // Create a Set to store unique IGUIDs that have changed
+  const changedIGUIDs = new Set<string>();
 
-  const changedTimecodes = controlClips
-    .filter((clip, index) => {
-      const revisedClip = revisedClips.find(r => r.IGUID === clip.IGUID);
-      const hasChanged = revisedClip && revisedClip.POSITION !== clip.POSITION;
+  controlClips.forEach(controlClip => {
+    const revisedClip = revisedClips.find(r => r.IGUID === controlClip.IGUID);
+    if (revisedClip && revisedClip.POSITION !== controlClip.POSITION) {
+      changedIGUIDs.add(controlClip.IGUID);
       
-      verbose && revisedClip && console.log(`Comparing clip ${clip.IGUID}:`, {
-        controlPosition: clip.POSITION,
-        revisedPosition: revisedClip.POSITION,
-        changed: hasChanged
+      verbose && console.log(`Change detected for clip ${controlClip.IGUID}:`, {
+        controlPosition: controlClip.POSITION,
+        revisedPosition: revisedClip.POSITION
       });
-      
-      return hasChanged;
-    })
-    .map(clip => clip.POSITION);
+    }
+  });
 
-  return changedTimecodes;
+  // Only return one position for each changed clip
+  return Array.from(changedIGUIDs)
+    .map(iguid => {
+      const clip = controlClips.find(c => c.IGUID === iguid);
+      return clip!.POSITION;
+    });
 }
 
 export default function App() {
@@ -125,7 +126,7 @@ export default function App() {
                 </div>
                 <div className="header-links">
                     <h2>
-                        yep
+                        about&nbsp;&nbsp;&nbsp;&nbsp;how to
                     </h2>
                 </div>
             </div>
