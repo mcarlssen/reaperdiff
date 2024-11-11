@@ -1,9 +1,8 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { FontAwesomeIcon } from './fontawesome';
+import { Switch, FormControlLabel } from '@mui/material';
 import './App.css';
-
-const VERBOSE = true;
 
 interface Clip {
   POSITION: number;
@@ -13,7 +12,7 @@ interface Clip {
   IGUID: string;
 }
 
-export async function parseRppFile(file: File): Promise<Clip[]> {
+export async function parseRppFile(file: File, verbose: boolean): Promise<Clip[]> {
   const data = await file.text();
   const lines = data.split('\n');
   const clips: Clip[] = [];
@@ -34,28 +33,28 @@ export async function parseRppFile(file: File): Promise<Clip[]> {
     }
   }
 
-  VERBOSE && console.log('Parsed Clips:');
-  VERBOSE && clips.forEach(clip => {
+  verbose && console.log('Parsed Clips:');
+  verbose && clips.forEach(clip => {
     console.log(`IGUID: ${clip.IGUID}, Position: ${clip.POSITION}`);
   });
 
   return clips;
 }
 
-export async function detectChanges(controlFile: File, revisedFile: File): Promise<number[]> {
-  const controlClips = await parseRppFile(controlFile);
-  const revisedClips = await parseRppFile(revisedFile);
+export async function detectChanges(controlFile: File, revisedFile: File, verbose: boolean): Promise<number[]> {
+  const controlClips = await parseRppFile(controlFile, verbose);
+  const revisedClips = await parseRppFile(revisedFile, verbose);
 
-  VERBOSE && console.log('\nComparing Files:');
-  VERBOSE && console.log('Control File Clips:', controlClips.length);
-  VERBOSE && console.log('Revised File Clips:', revisedClips.length);
+  verbose && console.log('\nComparing Files:');
+  verbose && console.log('Control File Clips:', controlClips.length);
+  verbose && console.log('Revised File Clips:', revisedClips.length);
 
   const changedTimecodes = controlClips
     .filter((clip, index) => {
       const revisedClip = revisedClips.find(r => r.IGUID === clip.IGUID);
       const hasChanged = revisedClip && revisedClip.POSITION !== clip.POSITION;
       
-      VERBOSE && revisedClip && console.log(`Comparing clip ${clip.IGUID}:`, {
+      verbose && revisedClip && console.log(`Comparing clip ${clip.IGUID}:`, {
         controlPosition: clip.POSITION,
         revisedPosition: revisedClip.POSITION,
         changed: hasChanged
@@ -69,8 +68,10 @@ export async function detectChanges(controlFile: File, revisedFile: File): Promi
 }
 
 export default function App() {
+  const [verbose, setVerbose] = useState<boolean>(true);
   const [controlFile, setControlFile] = useState<File | null>(null);
   const [revisedFile, setRevisedFile] = useState<File | null>(null);
+  const [results, setResults] = useState<number[] | null>(null);
 
   const onDropControl = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length === 1) {
@@ -91,7 +92,8 @@ export default function App() {
     }
 
     try {
-      const changedTimecodes = await detectChanges(controlFile, revisedFile);
+      const changedTimecodes = await detectChanges(controlFile, revisedFile, verbose);
+      setResults(changedTimecodes);
       console.log("Changed timecodes:", changedTimecodes);
     } catch (error) {
       console.error("Error detecting changes:", error);
@@ -128,7 +130,19 @@ export default function App() {
                 </div>
             </div>
             <div className="banner-right">
-                    Console logging
+                <FormControlLabel
+                    control={
+                        <Switch
+                            checked={verbose}
+                            onChange={(e) => {
+                                setVerbose(e.target.checked);
+                                console.log('Verbose logging:', e.target.checked);
+                            }}
+                            color="primary"
+                        />
+                    }
+                    label="Console logging"
+                />
             </div>
         </div>
         
@@ -167,6 +181,24 @@ export default function App() {
             >
                 Compare Files
             </button>
+
+            {results !== null && (
+                <div className="results-container">
+                    <h2>Results</h2>
+                    {results.length > 0 ? (
+                        <div className="results-list">
+                            <p>Found {results.length} changed position{results.length !== 1 ? 's' : ''}:</p>
+                            <ul>
+                                {results.map((position, index) => (
+                                    <li key={index}>Position: {position}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    ) : (
+                        <p>No changes detected</p>
+                    )}
+                </div>
+            )}
             </div>
         </div>
     </div>
