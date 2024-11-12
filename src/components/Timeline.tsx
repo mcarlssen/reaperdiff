@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
+import './Timeline.css';
 
 interface TimelineProps {
   controlClips: Clip[];
   revisedClips: Clip[];
-  width?: number;
-  height?: number;
+  width: number;
+  height: number;
 }
 
 interface Clip {
@@ -17,8 +18,8 @@ interface Clip {
 export const Timeline: React.FC<TimelineProps> = ({
   controlClips,
   revisedClips,
-  width = 1000,
-  height = 100
+  width,
+  height
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -48,17 +49,17 @@ export const Timeline: React.FC<TimelineProps> = ({
       ...revisedClips.map(c => c.POSITION + c.LENGTH)
     ]) as [number, number];
 
-    console.log('Time extent:', timeExtent);
-
-    // Create scales
+    // Create scales with margins
+    const margin = { left: 0, right: 0 };
     const xScale = d3.scaleLinear()
       .domain(timeExtent)
-      .range([50, width - 50]); // Add margins
+      .range([margin.left, width - margin.right]);
 
     // Create the SVG container
     const svg = d3.select(svgRef.current)
       .attr('width', width)
-      .attr('height', height);
+      .attr('height', height)
+      .attr('viewBox', `0 0 ${width} ${height}`);
 
     // Draw clips
     const drawClips = (clips: Clip[], yOffset: number, getColor: (clip: Clip) => string) => {
@@ -66,14 +67,14 @@ export const Timeline: React.FC<TimelineProps> = ({
         .data(clips)
         .enter()
         .append('rect')
-        .attr('class', `clip-${yOffset}`)
+        .attr('class', d => {
+          const status = getClipColor(d, yOffset === 20);
+          return `timeline-clip clip-${yOffset} ${status}`;
+        })
         .attr('x', d => xScale(d.POSITION))
         .attr('y', yOffset)
         .attr('width', d => xScale(d.POSITION + d.LENGTH) - xScale(d.POSITION))
-        .attr('height', 20)
-        .attr('fill', getColor)
-        .attr('rx', 3) // Rounded corners
-        .attr('ry', 3);
+        .attr('height', 40);
     };
 
     // Color determination function
@@ -81,27 +82,27 @@ export const Timeline: React.FC<TimelineProps> = ({
       const otherClips = isControl ? revisedClips : controlClips;
       const matchingClip = otherClips.find(c => c.IGUID === clip.IGUID);
 
-      if (!matchingClip) return '#ff4444'; // Red for deleted/added
-      if (matchingClip.POSITION !== clip.POSITION) return '#ffaa00'; // Yellow for modified
-      return '#44aa44'; // Green for unchanged
+      if (!matchingClip) return 'deleted-added';
+      if (matchingClip.POSITION !== clip.POSITION) return 'modified';
+      return 'unchanged';
     };
 
     // Draw both sets of clips
     drawClips(controlClips, 20, clip => getClipColor(clip, true));
-    drawClips(revisedClips, 60, clip => getClipColor(clip, false));
+    drawClips(revisedClips, 100, clip => getClipColor(clip, false));
 
     // Add labels
     svg.append('text')
+      .attr('class', 'timeline-label')
       .attr('x', 10)
-      .attr('y', 35)
-      .text('Control')
-      .attr('fill', '#ddd');
+      .attr('y', 15)
+      .text('Control');
 
     svg.append('text')
+      .attr('class', 'timeline-label')
       .attr('x', 10)
-      .attr('y', 75)
-      .text('Revised')
-      .attr('fill', '#ddd');
+      .attr('y', 95)
+      .text('Revised');
 
     // Add time axis
     const xAxis = d3.axisBottom(xScale)
@@ -109,20 +110,19 @@ export const Timeline: React.FC<TimelineProps> = ({
       .tickFormat(d => d.toString());
 
     svg.append('g')
-      .attr('transform', `translate(0, ${height - 20})`)
-      .call(xAxis)
-      .attr('color', '#ddd');
+      .attr('class', 'timeline-axis')
+      .attr('transform', `translate(0, ${height - 40})`)
+      .call(xAxis);
 
   }, [controlClips, revisedClips, width, height]);
 
   return (
     <svg 
-      ref={svgRef} 
+      ref={svgRef}
+      className="timeline-svg"
       style={{
-        border: '1px solid red',
-        backgroundColor: 'var(--secondary-bg)',
-        width: width,
-        height: height
+        height: height,
+        width: width
       }}
     />
   );

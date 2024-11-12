@@ -1,3 +1,17 @@
+@font-face {
+    font-family: 'Frutiger';
+    src: url('../public/Frutiger.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Frutiger Bold';
+    src: url('../public/Frutiger_bold.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
 :root {
     --primary-bg: #1a1a1a;
     --secondary-bg: #2a2a2a;
@@ -104,16 +118,30 @@ body {
 
 /* drop zone styles */
 
+.dropzone-container {
+  display: flex;
+  gap: 20px;  /* Space between dropzones */
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+
 .dropzone {
-  border: 2px dashed #cccccc;
+  flex: 1;  /* Each dropzone takes equal space */
+  border: 2px dashed var(--text-accent-color);
   border-radius: 4px;
-  padding: 20px;
+  padding: 40px;
   text-align: center;
   cursor: pointer;
-  margin-bottom: 20px;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
 }
 
 .compare-button {
+  width: 50%;  /* Button takes 50% of container width */
   padding: 10px 20px;
   font-size: 16px;
 }
@@ -157,19 +185,24 @@ body {
 }
 
 .results-container {
-  margin-top: 20px;
+  margin-top: 40px;
   padding: 20px;
   background-color: var(--primary-bg);
-  border-radius: 4px;
+  border-top: 1px solid var(--border-color);
+  border-radius: 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.results-container h2 {
-  margin-bottom: 10px;
-  color: var(--text-accent-color);
+h2 {
+  color: var(--text-color);
 }
 
 .results-list {
   margin-top: 10px;
+  background-color: var(--secondary-bg);
+  border-radius: 8px;
+  padding: 20px;
 }
 
 .results-list ul {
@@ -188,7 +221,19 @@ body {
 
 .results-container svg {
   margin-top: 20px;
-  background-color: var(--secondary-bg);
-  border-radius: 4px;
+  background-color: var(--border-color);
+  border-radius: 8px;
   padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.compare-button.clear-button {
+  background-color: var(--text-accent-color);
+  color: var(--primary-bg);
+  border: none;
+}
+
+.compare-button.clear-button:hover {
+  background-color: #cc9900;
 }

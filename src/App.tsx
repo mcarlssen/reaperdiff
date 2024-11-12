@@ -1,9 +1,10 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { FontAwesomeIcon } from './fontawesome';
 import { Switch, FormControlLabel } from '@mui/material';
 import './App.css';
 import { Timeline } from './components/Timeline';
+import { detectChanges } from './components/changeDetection';
 
 interface Clip {
   POSITION: number;
@@ -13,70 +14,6 @@ interface Clip {
   IGUID: string;
 }
 
-export async function parseRppFile(file: File, verbose: boolean): Promise<Clip[]> {
-  const data = await file.text();
-  const lines = data.split('\n');
-  const clips: Clip[] = [];
-  let currentClip: Partial<Clip> = {};
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (line.startsWith('<ITEM')) {
-      currentClip = {};
-    } else if (line.startsWith('IGUID')) {
-      currentClip.IGUID = line.split(' ')[1];
-    } else if (line.startsWith('POSITION')) {
-      currentClip.POSITION = parseFloat(line.split(' ')[1]);
-    } else if (line.startsWith('LENGTH')) {
-      currentClip.LENGTH = parseFloat(line.split(' ')[1]);
-    } else if (line.startsWith('>')) {
-      if (currentClip.IGUID && currentClip.POSITION !== undefined && currentClip.LENGTH !== undefined) {
-        clips.push(currentClip as Clip);
-      }
-    }
-  }
-
-  const uniqueClips = clips.reduce((acc, current) => {
-    const x = acc.find(item => item.IGUID === current.IGUID);
-    if (!x) {
-      return acc.concat([current]);
-    } else {
-      return acc;
-    }
-  }, [] as Clip[]);
-
-  verbose && console.log('Parsed Clips (unique):', uniqueClips);
-
-  return uniqueClips;
-}
-
-export async function detectChanges(controlFile: File, revisedFile: File, verbose: boolean): Promise<number[]> {
-  const controlClips = await parseRppFile(controlFile, verbose);
-  const revisedClips = await parseRppFile(revisedFile, verbose);
-
-  // Create a Set to store unique IGUIDs that have changed
-  const changedIGUIDs = new Set<string>();
-
-  controlClips.forEach(controlClip => {
-    const revisedClip = revisedClips.find(r => r.IGUID === controlClip.IGUID);
-    if (revisedClip && revisedClip.POSITION !== controlClip.POSITION) {
-      changedIGUIDs.add(controlClip.IGUID);
-      
-      verbose && console.log(`Change detected for clip ${controlClip.IGUID}:`, {
-        controlPosition: controlClip.POSITION,
-        revisedPosition: revisedClip.POSITION
-      });
-    }
-  });
-
-  // Only return one position for each changed clip
-  return Array.from(changedIGUIDs)
-    .map(iguid => {
-      const clip = controlClips.find(c => c.IGUID === iguid);
-      return clip!.POSITION;
-    });
-}
-
 export default function App() {
   const [verbose, setVerbose] = useState<boolean>(true);
   const [controlFile, setControlFile] = useState<File | null>(null);
@@ -84,6 +21,27 @@ export default function App() {
   const [results, setResults] = useState<number[] | null>(null);
   const [controlClips, setControlClips] = useState<Clip[]>([]);
   const [revisedClips, setRevisedClips] = useState<Clip[]>([]);
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
+  const resultsContainerRef = useRef<HTMLDivElement>(null);
+  const [isCompared, setIsCompared] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (resultsContainerRef.current) {
+      // Immediate measurement when the container is available
+      setContainerWidth(resultsContainerRef.current.clientWidth - 0);
+
+      const resizeObserver = new ResizeObserver(entries => {
+        for (const entry of entries) {
+          // Get the available width from the container
+          const availableWidth = entry.contentRect.width - 0; // 40px for padding
+          setContainerWidth(availableWidth);
+        }
+      });
+
+      resizeObserver.observe(resultsContainerRef.current);
+      return () => resizeObserver.disconnect();
+    }
+  }, [results]);
 
   const onDropControl = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length === 1) {
@@ -104,18 +62,26 @@ export default function App() {
     }
 
     try {
-      const control = await parseRppFile(controlFile, verbose);
-      const revised = await parseRppFile(revisedFile, verbose);
-      console.log('Setting clips:', { control, revised });
+      const { changedPositions, controlClips: control, revisedClips: revised } = 
+        await detectChanges(controlFile, revisedFile, verbose);
+      
       setControlClips(control);
       setRevisedClips(revised);
-      
-      const changedTimecodes = await detectChanges(controlFile, revisedFile, verbose);
-      setResults(changedTimecodes);
-      console.log("Changed timecodes:", changedTimecodes);
+      setResults(changedPositions);
+      setIsCompared(true);
     } catch (error) {
       console.error("Error detecting changes:", error);
     }
+  };
+
+  const clearAll = () => {
+    setControlFile(null);
+    setRevisedFile(null);
+    setResults(null);
+    setControlClips([]);
+    setRevisedClips([]);
+    setContainerWidth(null);
+    setIsCompared(false);
   };
 
   const { getRootProps: getControlRootProps, getInputProps: getControlInputProps, isDragActive: isControlDragActive } = useDropzone({
@@ -139,7 +105,7 @@ export default function App() {
         <div className="top-banner">
             <div className="banner-left">
                 <div className="app-title">
-                    <FontAwesomeIcon icon="code-compare" /> rpp.app
+                    <FontAwesomeIcon icon="code-compare" /> reaperdiff.app
                 </div>
                 <div className="header-links">
                     <h2>
@@ -166,61 +132,77 @@ export default function App() {
         
         <div className="main-content">
             <div className="container">
-            <h1>Diff-style .RPP File Comparison</h1>
+            <h2>Diff-style .RPP Comparison</h2>
             
-            <div {...getControlRootProps()} className="dropzone">
-                <input {...getControlInputProps()} />
-                {isControlDragActive ? (
-                <p>Drop the control file here...</p>
-                ) : (
-                <div>
-                    <p>Drop control .rpp file here, or click to select</p>
-                    {controlFile && <p>Selected: {controlFile.name}</p>}
+            <div className="dropzone-container">
+                <div {...getControlRootProps()} className="dropzone">
+                    <input {...getControlInputProps()} />
+                    {isControlDragActive ? (
+                    <p>Drop the control file here...</p>
+                    ) : (
+                    <div>
+                        <p>Drop <b>control</b> .rpp file here, or click to select</p>
+                        {controlFile && <p>Selected: {controlFile.name}</p>}
+                    </div>
+                    )}
                 </div>
-                )}
+
+                <div {...getRevisedRootProps()} className="dropzone">
+                    <input {...getRevisedInputProps()} />
+                    {isRevisedDragActive ? (
+                    <p>Drop the <b>revised</b> .rpp file here...</p>
+                    ) : (
+                    <div>
+                        <p>Drop revised .rpp file here, or click to select</p>
+                        {revisedFile && <p>Selected: {revisedFile.name}</p>}
+                    </div>
+                    )}
+                </div>
             </div>
 
-            <div {...getRevisedRootProps()} className="dropzone">
-                <input {...getRevisedInputProps()} />
-                {isRevisedDragActive ? (
-                <p>Drop the revised file here...</p>
-                ) : (
-                <div>
-                    <p>Drop revised .rpp file here, or click to select</p>
-                    {revisedFile && <p>Selected: {revisedFile.name}</p>}
-                </div>
-                )}
+            <div className="button-container">
+                <button 
+                    onClick={isCompared ? clearAll : compareFiles}
+                    disabled={!isCompared && (!controlFile || !revisedFile)}
+                    className={`compare-button ${isCompared ? 'clear-button' : ''}`}
+                >
+                    {isCompared ? 'Clear' : 'Compare Files'}
+                </button>
             </div>
-
-            <button 
-                onClick={compareFiles}
-                disabled={!controlFile || !revisedFile}
-                className="compare-button"
-            >
-                Compare Files
-            </button>
 
             {results !== null && (
-                <div className="results-container">
-                    <h2>Results</h2>
-                    <Timeline 
-                      controlClips={controlClips}
-                      revisedClips={revisedClips}
-                      width={1000}
-                      height={120}
-                    />
-                    {results.length > 0 ? (
-                        <div className="results-list">
-                            <p>Found {results.length} changed position{results.length !== 1 ? 's' : ''}:</p>
-                            <ul>
-                                {results.map((position, index) => (
-                                    <li key={index}>Position: {position}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    ) : (
-                        <p>No changes detected !</p>
-                    )}
+                <div className="results-container" ref={resultsContainerRef}>
+                    <>
+                        <h2>Results</h2>
+                        {console.log('Render conditions:', {
+                            controlClipsLength: controlClips.length,
+                            revisedClipsLength: revisedClips.length,
+                            containerWidth,
+                            shouldRenderTimeline: controlClips.length > 0 && revisedClips.length > 0 && containerWidth
+                        })}
+                        {controlClips.length > 0 && revisedClips.length > 0 && containerWidth ? (
+                          <Timeline 
+                            controlClips={controlClips}
+                            revisedClips={revisedClips}
+                            width={containerWidth}
+                            height={220}
+                          />
+                        ) : (
+                          <p>Loading timeline...</p>
+                        )}
+                        {results.length > 0 ? (
+                            <div className="results-list">
+                                <p>Found {results.length} changed position{results.length !== 1 ? 's' : ''}:</p>
+                                <ul>
+                                    {results.map((position, index) => (
+                                        <li key={index}>Position: {position}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ) : (
+                            <p>No changes detected !</p>
+                        )}
+                    </>
                 </div>
             )}
             </div>

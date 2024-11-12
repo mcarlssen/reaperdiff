@@ -1,0 +1,33 @@
+.timeline-svg {
+  background-color: var(--secondary-bg);
+  width: 100%;
+  border-radius: 4px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.timeline-label {
+  fill: var(--text-color);
+  font-size: 12px;
+}
+
+.timeline-axis {
+  color: var(--text-color);
+}
+
+.timeline-clip {
+  rx: 2px;
+  ry: 2px;
+}
+
+.timeline-clip.unchanged {
+  fill: #44aa44;
+}
+
+.timeline-clip.modified {
+  fill: #ffaa00;
+}
+
+.timeline-clip.deleted-added {
+  fill: #ff4444;
+} 
