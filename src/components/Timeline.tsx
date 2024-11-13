@@ -1,25 +1,22 @@
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import './Timeline.css';
+import { Clip, Change } from '../types';
 
 interface TimelineProps {
   controlClips: Clip[];
   revisedClips: Clip[];
   width: number;
   height: number;
-}
-
-interface Clip {
-  POSITION: number;
-  LENGTH: number;
-  IGUID: string;
+  changes: Change[];
 }
 
 export const Timeline: React.FC<TimelineProps> = ({
   controlClips,
   revisedClips,
   width,
-  height
+  height,
+  changes
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -27,6 +24,7 @@ export const Timeline: React.FC<TimelineProps> = ({
     console.log('Timeline useEffect triggered with:', {
       controlClips,
       revisedClips,
+      changes,
       svgRef: svgRef.current
     });
 
@@ -61,35 +59,62 @@ export const Timeline: React.FC<TimelineProps> = ({
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`);
 
-    // Draw clips
-    const drawClips = (clips: Clip[], yOffset: number, getColor: (clip: Clip) => string) => {
-      svg.selectAll(`rect.clip-${yOffset}`)
+    // Updated color determination function
+    const getClipColor = (clip: Clip, isControl: boolean): string => {
+      const change = changes.find(c => {
+        if (isControl) {
+          return c.originalPosition === clip.POSITION;
+        } else {
+          return c.position === clip.POSITION;
+        }
+      });
+
+      if (!change) return 'unchanged';
+
+      switch (change.type) {
+        case 'deleted':
+          return isControl ? 'deleted-added' : 'unchanged';
+        case 'added':
+          return isControl ? 'unchanged' : 'deleted-added';
+        case 'changed':
+          return 'modified';
+        default:
+          return 'unchanged';
+      }
+    };
+
+    // Updated drawClips function
+    const drawClips = (clips: Clip[], yOffset: number, isControl: boolean) => {
+      const clipGroup = svg.append('g')
+        .attr('class', `clips-${isControl ? 'control' : 'revised'}`);
+
+      clipGroup.selectAll('rect')
         .data(clips)
         .enter()
         .append('rect')
         .attr('class', d => {
-          const status = getClipColor(d, yOffset === 20);
-          return `timeline-clip clip-${yOffset} ${status}`;
+          const status = getClipColor(d, isControl);
+          return `timeline-clip ${status}`;
         })
         .attr('x', d => xScale(d.POSITION))
         .attr('y', yOffset)
         .attr('width', d => xScale(d.POSITION + d.LENGTH) - xScale(d.POSITION))
-        .attr('height', 40);
+        .attr('height', 40)
+        // Add tooltips
+        .append('title')
+        .text(d => {
+          const change = changes.find(c => 
+            isControl ? c.originalPosition === d.POSITION : c.position === d.POSITION
+          );
+          return `Position: ${d.POSITION.toFixed(3)}
+Length: ${d.LENGTH.toFixed(3)}
+Status: ${change ? change.type : 'unchanged'}`;
+        });
     };
 
-    // Color determination function
-    const getClipColor = (clip: Clip, isControl: boolean) => {
-      const otherClips = isControl ? revisedClips : controlClips;
-      const matchingClip = otherClips.find(c => c.IGUID === clip.IGUID);
-
-      if (!matchingClip) return 'deleted-added';
-      if (matchingClip.POSITION !== clip.POSITION) return 'modified';
-      return 'unchanged';
-    };
-
-    // Draw both sets of clips
-    drawClips(controlClips, 20, clip => getClipColor(clip, true));
-    drawClips(revisedClips, 100, clip => getClipColor(clip, false));
+    // Draw clips with updated functions
+    drawClips(controlClips, 20, true);
+    drawClips(revisedClips, 100, false);
 
     // Add labels
     svg.append('text')
@@ -114,7 +139,7 @@ export const Timeline: React.FC<TimelineProps> = ({
       .attr('transform', `translate(0, ${height - 40})`)
       .call(xAxis);
 
-  }, [controlClips, revisedClips, width, height]);
+  }, [controlClips, revisedClips, changes, width, height]);
 
   return (
     <svg 

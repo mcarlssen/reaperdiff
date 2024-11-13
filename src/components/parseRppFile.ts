@@ -1,10 +1,4 @@
-interface Clip {
-  POSITION: number;
-  LENGTH: number;
-  OFFSET?: number;
-  NAME: string;
-  IGUID: string;
-}
+import { Clip } from '../types';
 
 export async function parseRppFile(file: File, verbose: boolean): Promise<Clip[]> {
   const data = await file.text();
@@ -41,43 +35,4 @@ export async function parseRppFile(file: File, verbose: boolean): Promise<Clip[]
   verbose && console.log('Parsed Clips (unique):', uniqueClips);
 
   return uniqueClips;
-}
-
-export async function detectChanges(
-  controlFile: File, 
-  revisedFile: File, 
-  verbose: boolean
-): Promise<{
-  changedPositions: number[],
-  controlClips: Clip[],
-  revisedClips: Clip[]
-}> {
-  const controlClips = await parseRppFile(controlFile, verbose);
-  const revisedClips = await parseRppFile(revisedFile, verbose);
-
-  const changedIGUIDs = new Set<string>();
-
-  controlClips.forEach(controlClip => {
-    const revisedClip = revisedClips.find(r => r.IGUID === controlClip.IGUID);
-    if (revisedClip && revisedClip.POSITION !== controlClip.POSITION) {
-      changedIGUIDs.add(controlClip.IGUID);
-      
-      verbose && console.log(`Change detected for clip ${controlClip.IGUID}:`, {
-        controlPosition: controlClip.POSITION,
-        revisedPosition: revisedClip.POSITION
-      });
-    }
-  });
-
-  const changedPositions = Array.from(changedIGUIDs)
-    .map(iguid => {
-      const clip = controlClips.find(c => c.IGUID === iguid);
-      return clip!.POSITION;
-    });
-
-  return {
-    changedPositions,
-    controlClips,
-    revisedClips
-  };
 } 

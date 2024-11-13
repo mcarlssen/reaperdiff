@@ -137,7 +137,9 @@ body {
 .button-container {
   display: flex;
   justify-content: center;
+  align-items: center;
   margin: 20px 0;
+  gap: 20px;
 }
 
 .compare-button {
@@ -236,4 +238,37 @@ h2 {
 
 .compare-button.clear-button:hover {
   background-color: #cc9900;
+}
+
+.detection-options {
+  display: flex;
+  gap: 20px;
+}
+
+.detection-options .MuiFormControlLabel-root {
+  margin: 0;
+  color: var(--text-color);
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.detection-options .MuiSwitch-root {
+  margin-left: 10px;
+}
+
+.detection-options .MuiSwitch-root .MuiSwitch-switchBase.Mui-checked {
+  color: var(--text-accent-color);
+}
+
+.detection-options .MuiSwitch-root .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track {
+  background-color: var(--text-accent-color) !important;
+}
+
+/* Optional: style the unchecked state too */
+.detection-options .MuiSwitch-root .MuiSwitch-switchBase {
+  color: var(--text-color);
+}
+
+.detection-options .MuiSwitch-root .MuiSwitch-track {
+  background-color: var(--border-color) !important;
 }

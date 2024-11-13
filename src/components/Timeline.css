@@ -18,6 +18,11 @@
 .timeline-clip {
   rx: 2px;
   ry: 2px;
+  transition: opacity 0.2s;
+}
+
+.timeline-clip:hover {
+  opacity: 0.8;
 }
 
 .timeline-clip.unchanged {

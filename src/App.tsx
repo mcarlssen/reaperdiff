@@ -4,15 +4,8 @@ import { FontAwesomeIcon } from './fontawesome';
 import { Switch, FormControlLabel } from '@mui/material';
 import './App.css';
 import { Timeline } from './components/Timeline';
-import { detectChanges } from './components/changeDetection';
-
-interface Clip {
-  POSITION: number;
-  LENGTH: number;
-  OFFSET?: number;
-  NAME: string;
-  IGUID: string;
-}
+import { detectChanges } from './components';
+import { Clip, Change } from './types';
 
 export default function App() {
   const [verbose, setVerbose] = useState<boolean>(true);
@@ -24,6 +17,10 @@ export default function App() {
   const [containerWidth, setContainerWidth] = useState<number | null>(null);
   const resultsContainerRef = useRef<HTMLDivElement>(null);
   const [isCompared, setIsCompared] = useState<boolean>(false);
+  const [changes, setChanges] = useState<Change[]>([]);
+  const [detectOverlapsEnabled, setDetectOverlapsEnabled] = useState<boolean>(false);
+  const [detectPositionsEnabled, setDetectPositionsEnabled] = useState<boolean>(true);
+  const [detectLengthsEnabled, setDetectLengthsEnabled] = useState<boolean>(false);
 
   useEffect(() => {
     if (resultsContainerRef.current) {
@@ -62,12 +59,17 @@ export default function App() {
     }
 
     try {
-      const { changedPositions, controlClips: control, revisedClips: revised } = 
-        await detectChanges(controlFile, revisedFile, verbose);
+      const { changedPositions, controlClips: control, revisedClips: revised, changes } = 
+        await detectChanges(controlFile, revisedFile, verbose, {
+          detectOverlaps: detectOverlapsEnabled,
+          detectPositions: detectPositionsEnabled,
+          detectLengths: detectLengthsEnabled
+        });
       
       setControlClips(control);
       setRevisedClips(revised);
       setResults(changedPositions);
+      setChanges(changes);
       setIsCompared(true);
     } catch (error) {
       console.error("Error detecting changes:", error);
@@ -161,6 +163,38 @@ export default function App() {
             </div>
 
             <div className="button-container">
+                <div className="detection-options">
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={detectOverlapsEnabled}
+                                onChange={(e) => setDetectOverlapsEnabled(e.target.checked)}
+                                color="primary"
+                            />
+                        }
+                        label="Detect Overlaps"
+                    />
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={detectPositionsEnabled}
+                                onChange={(e) => setDetectPositionsEnabled(e.target.checked)}
+                                color="primary"
+                            />
+                        }
+                        label="Detect Positions"
+                    />
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={detectLengthsEnabled}
+                                onChange={(e) => setDetectLengthsEnabled(e.target.checked)}
+                                color="primary"
+                            />
+                        }
+                        label="Detect Lengths"
+                    />
+                </div>
                 <button 
                     onClick={isCompared ? clearAll : compareFiles}
                     disabled={!isCompared && (!controlFile || !revisedFile)}
@@ -186,6 +220,7 @@ export default function App() {
                             revisedClips={revisedClips}
                             width={containerWidth}
                             height={220}
+                            changes={changes}
                           />
                         ) : (
                           <p>Loading timeline...</p>
