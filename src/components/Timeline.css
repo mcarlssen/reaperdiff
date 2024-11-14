@@ -8,7 +8,7 @@
 
 .timeline-label {
   fill: var(--text-color);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .timeline-axis {
@@ -16,13 +16,14 @@
 }
 
 .timeline-clip {
-  rx: 2px;
-  ry: 2px;
-  transition: opacity 0.2s;
+  rx: 3px;
+  ry: 3px;
+  transition: opacity 0.2s, border 0.2s;
 }
 
 .timeline-clip:hover {
   opacity: 0.8;
+  border: 1px solid #ebb400;
 }
 
 .timeline-clip.unchanged {

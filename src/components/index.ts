@@ -1,6 +1,6 @@
 import { Clip, Change } from '../types';
 import { parseRppFile } from './parseRppFile';
-import { compareClips, findMatchingClip } from './detectPositionChange';
+import { compareClips, findMatchingClip } from './detectFingerprint';
 import { detectOverlaps } from './detectOverlaps';
 import { detectLengthChanges } from './detectLengthChanges';
 
@@ -8,6 +8,7 @@ interface DetectionOptions {
   detectOverlaps: boolean;
   detectPositions: boolean;
   detectLengths: boolean;
+  detectFingerprint: boolean;
 }
 
 export async function detectChanges(
@@ -27,45 +28,54 @@ export async function detectChanges(
   
   let cumulativeShift = 0;
   
-  if (options.detectPositions) {
-    // First pass: detect changed and deleted clips
-    controlClips.forEach(controlClip => {
-      const revisedClip = findMatchingClip(controlClip, revisedClips);
-      
-      if (!revisedClip) {
-        // Clip exists in control but not in revised -> deleted
-        changes.push({
-          position: controlClip.POSITION,
-          type: 'deleted',
-          originalPosition: controlClip.POSITION
-        });
-      } else if (compareClips(controlClip, revisedClip, cumulativeShift)) {
-        // Clip exists in both but has changed position
-        changes.push({
-          position: revisedClip.POSITION,
-          type: 'changed',
-          originalPosition: controlClip.POSITION
-        });
-        
-        // Only update cumulative shift if length detection is enabled
-        if (options.detectLengths && detectLengthChanges(controlClip, revisedClip)) {
-          cumulativeShift += (revisedClip.LENGTH - controlClip.LENGTH);
-        }
-      }
-    });
+  // First pass: detect changed and deleted clips
+  controlClips.forEach(controlClip => {
+    const revisedClip = findMatchingClip(controlClip, revisedClips);
     
-    // Second pass: detect added clips
-    revisedClips.forEach(revisedClip => {
-      const controlClip = findMatchingClip(revisedClip, controlClips);
-      if (!controlClip) {
-        // Clip exists in revised but not in control -> added
-        changes.push({
-          position: revisedClip.POSITION,
-          type: 'added'
-        });
+    if (!revisedClip) {
+      // Clip exists in control but not in revised -> deleted
+      changes.push({
+        revisedPosition: controlClip.POSITION,
+        type: 'deleted',
+        controlPosition: controlClip.POSITION,
+        controlLength: controlClip.LENGTH,
+        controlOffset: controlClip.OFFSET || 0,
+        detectionMethod: 'fingerprint'
+      });
+    } else if (
+      // Check fingerprints if enabled
+      (options.detectFingerprint && compareClips(controlClip, revisedClip, controlClips, revisedClips, controlClips.indexOf(controlClip))) ||
+      // Check positions if enabled
+      (options.detectPositions && controlClip.POSITION !== revisedClip.POSITION)
+    ) {
+      changes.push({
+        revisedPosition: revisedClip.POSITION,
+        type: 'changed',
+        controlPosition: controlClip.POSITION,
+        controlLength: controlClip.LENGTH,
+        controlOffset: controlClip.OFFSET || 0,
+        detectionMethod: options.detectFingerprint ? 'fingerprint' : 'position'
+      });
+      
+      // Only update cumulative shift if length detection is enabled
+      if (options.detectLengths && detectLengthChanges(controlClip, revisedClip)) {
+        cumulativeShift += (revisedClip.LENGTH - controlClip.LENGTH);
       }
-    });
-  }
+    }
+  });
+  
+  // Second pass: detect added clips
+  revisedClips.forEach(revisedClip => {
+    const controlClip = findMatchingClip(revisedClip, controlClips);
+    if (!controlClip) {
+      // Clip exists in revised but not in control -> added
+      changes.push({
+        revisedPosition: revisedClip.POSITION,
+        type: 'added',
+        detectionMethod: 'fingerprint'
+      });
+    }
+  });
 
   if (verbose) {
     console.log('Detected changes:', {
@@ -76,7 +86,7 @@ export async function detectChanges(
   }
 
   return {
-    changedPositions: changes.map(change => change.position),
+    changedPositions: changes.map(change => change.revisedPosition),
     controlClips,
     revisedClips,
     changes
@@ -85,7 +95,7 @@ export async function detectChanges(
 
 // Export all the components
 export { parseRppFile } from './parseRppFile';
-export { compareClips, findMatchingClip } from './detectPositionChange';
+export { compareClips, findMatchingClip } from './detectFingerprint';
 export { detectOverlaps } from './detectOverlaps';
 export { detectLengthChanges } from './detectLengthChanges';
   

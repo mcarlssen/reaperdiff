@@ -19,8 +19,10 @@ export default function App() {
   const [isCompared, setIsCompared] = useState<boolean>(false);
   const [changes, setChanges] = useState<Change[]>([]);
   const [detectOverlapsEnabled, setDetectOverlapsEnabled] = useState<boolean>(false);
-  const [detectPositionsEnabled, setDetectPositionsEnabled] = useState<boolean>(true);
+  const [detectPositionsEnabled, setDetectPositionsEnabled] = useState<boolean>(false);
   const [detectLengthsEnabled, setDetectLengthsEnabled] = useState<boolean>(false);
+  const [detectFingerprintEnabled, setDetectFingerprintEnabled] = useState<boolean>(true);
+  const [hoveredPosition, setHoveredPosition] = useState<number | null>(null);
 
   useEffect(() => {
     if (resultsContainerRef.current) {
@@ -63,7 +65,8 @@ export default function App() {
         await detectChanges(controlFile, revisedFile, verbose, {
           detectOverlaps: detectOverlapsEnabled,
           detectPositions: detectPositionsEnabled,
-          detectLengths: detectLengthsEnabled
+          detectLengths: detectLengthsEnabled,
+          detectFingerprint: detectFingerprintEnabled
         });
       
       setControlClips(control);
@@ -172,17 +175,7 @@ export default function App() {
                                 color="primary"
                             />
                         }
-                        label="Detect Overlaps"
-                    />
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                checked={detectPositionsEnabled}
-                                onChange={(e) => setDetectPositionsEnabled(e.target.checked)}
-                                color="primary"
-                            />
-                        }
-                        label="Detect Positions"
+                        label="Overlaps"
                     />
                     <FormControlLabel
                         control={
@@ -192,16 +185,38 @@ export default function App() {
                                 color="primary"
                             />
                         }
-                        label="Detect Lengths"
+                        label="Lengths"
+                    />
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={detectFingerprintEnabled}
+                                onChange={(e) => setDetectFingerprintEnabled(e.target.checked)}
+                                color="primary"
+                            />
+                        }
+                        label="Fingerprints"
+                    />
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={detectPositionsEnabled}
+                                onChange={(e) => setDetectPositionsEnabled(e.target.checked)}
+                                color="primary"
+                            />
+                        }
+                        label="Positions"
                     />
                 </div>
-                <button 
-                    onClick={isCompared ? clearAll : compareFiles}
-                    disabled={!isCompared && (!controlFile || !revisedFile)}
-                    className={`compare-button ${isCompared ? 'clear-button' : ''}`}
-                >
-                    {isCompared ? 'Clear' : 'Compare Files'}
-                </button>
+                <div className="compare-button-container">
+                    <button 
+                        onClick={isCompared ? clearAll : compareFiles}
+                        disabled={!isCompared && (!controlFile || !revisedFile)}
+                        className={`compare-button ${isCompared ? 'clear-button' : ''}`}
+                    >
+                        {isCompared ? 'Clear' : 'Compare Files'}
+                    </button>
+                </div>
             </div>
 
             {results !== null && (
@@ -216,26 +231,36 @@ export default function App() {
                         })}
                         {controlClips.length > 0 && revisedClips.length > 0 && containerWidth ? (
                           <Timeline 
-                            controlClips={controlClips}
                             revisedClips={revisedClips}
                             width={containerWidth}
-                            height={220}
+                            height={320}
                             changes={changes}
+                            hoveredPosition={hoveredPosition}
                           />
                         ) : (
                           <p>Loading timeline...</p>
                         )}
                         {results.length > 0 ? (
                             <div className="results-list">
-                                <p>Found {results.length} changed position{results.length !== 1 ? 's' : ''}:</p>
+                                <p>Found {changes.length} change{changes.length !== 1 ? 's' : ''}:</p>
                                 <ul>
-                                    {results.map((position, index) => (
-                                        <li key={index}>Position: {position}</li>
-                                    ))}
+                                    {changes
+                                        .sort((a, b) => a.revisedPosition - b.revisedPosition)
+                                        .map((change, index) => (
+                                            <li 
+                                                key={index}
+                                                onMouseEnter={() => setHoveredPosition(change.revisedPosition)}
+                                                onMouseLeave={() => setHoveredPosition(null)}
+                                                className="result-item"
+                                            >
+                                                {change.detectionMethod.charAt(0).toUpperCase() + 
+                                                 change.detectionMethod.slice(1)}: {change.revisedPosition.toFixed(2)}
+                                            </li>
+                                        ))}
                                 </ul>
                             </div>
                         ) : (
-                            <p>No changes detected !</p>
+                            <p>No changes detected!</p>
                         )}
                     </>
                 </div>

@@ -16,6 +16,7 @@
     --primary-bg: #1a1a1a;
     --secondary-bg: #2a2a2a;
     --border-color: #3a3a3a;
+    --border-color-light: #4e4e4e;
     --text-color: #ddd;
     --text-accent-color: #ebb400;
     --accent-color: #4caf50;
@@ -135,11 +136,26 @@ body {
 }
 
 .button-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 20px 0;
-  gap: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.detection-options {
+    margin: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    align-items: center;
+    width: 100%;
+}
+
+.compare-button-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
 }
 
 .compare-button {
@@ -215,6 +231,9 @@ h2 {
 .results-list li {
   padding: 5px 0;
   border-bottom: 1px solid var(--border-color);
+  display: flex;
+  gap: 8px;
+  font-size: .75em;
 }
 
 .results-list li:last-child {
@@ -243,17 +262,22 @@ h2 {
 .detection-options {
   display: flex;
   gap: 20px;
+  align-items: center;
 }
 
 .detection-options .MuiFormControlLabel-root {
   margin: 0;
   color: var(--text-color);
-  text-transform: uppercase;
-  font-weight: bold;
+  gap: 10px !important;
 }
 
-.detection-options .MuiSwitch-root {
-  margin-left: 10px;
+.MuiFormControlLabel-root .MuiFormControlLabel-label {
+  font-size: 9.6px !important;
+  text-transform: uppercase !important;
+}
+
+.detection-options .MuiFormControlLabel-root .MuiSwitch-root {
+  margin-left: 10px !important;
 }
 
 .detection-options .MuiSwitch-root .MuiSwitch-switchBase.Mui-checked {
@@ -270,5 +294,78 @@ h2 {
 }
 
 .detection-options .MuiSwitch-root .MuiSwitch-track {
-  background-color: var(--border-color) !important;
+  background-color: var(--primary-bg) !important;
+}
+
+/* Common styles for both banner and detection options switches */
+.MuiSwitch-root {
+  width: 28px !important;
+  height: 16px !important;
+  padding: 0 !important;
+  display: flex !important;
+}
+
+/* Switch base (the clickable area) */
+.MuiSwitch-switchBase {
+  padding: 2px !important;
+  color: #fff !important;
+}
+
+/* Checked state positioning */
+.MuiSwitch-switchBase.Mui-checked {
+  transform: translateX(12px) !important;
+  color: #fff !important;
+}
+
+/* The circular thumb */
+.MuiSwitch-thumb {
+  box-shadow: 0 2px 4px 0 rgba(0, 35, 11, 0.2) !important;
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 6px !important;
+  transition: width 200ms !important;
+}
+
+/* Active state (being clicked) */
+.MuiSwitch-root:active .MuiSwitch-thumb {
+  width: 15px !important;
+}
+
+.MuiSwitch-root:active .MuiSwitch-switchBase.Mui-checked {
+  transform: translateX(9px) !important;
+}
+
+/* The track (background) */
+.MuiSwitch-track {
+  border-radius: 8px !important;
+  opacity: 1 !important;
+  background-color: rgba(0, 0, 0, 0.25) !important;
+  box-sizing: border-box !important;
+}
+
+/* Checked state colors - using your accent color */
+.MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track {
+  background-color: var(--text-accent-color) !important;
+  opacity: 1 !important;
+}
+
+.detection-method {
+  font-weight: bold;
+  color: var(--text-accent-color);
+}
+
+.result-item {
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.result-item:hover {
+    color: var(--text-accent-color);
+}
+
+/* Add to your existing Timeline styles */
+.clip.hovered rect {
+    stroke: var(--text-accent-color);
+    stroke-width: 2px;
+    filter: brightness(1.2);
 }

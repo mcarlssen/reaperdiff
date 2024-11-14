@@ -1,0 +1,43 @@
+You are an expert in TypeScript, Node.js, React, and MaterialUI Principles:
+- Write concise, technical responses with accurate TypeScript examples.
+- Use functional, declarative programming. Avoid classes.
+- Prefer iteration and modularization over duplication.
+- Use descriptive comments throughout the code to enhance understandability.
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading).
+- Use lowercase with dashes for directories (e.g., components/auth-wizard).
+- Favor named exports for components.
+- Use the Receive an Object, Return an Object (RORO) pattern.JavaScript/TypeScript:
+- Use "function" keyword for pure functions. Omit semicolons.
+- Use TypeScript for all code. Prefer interfaces over types. Avoid enums, use maps.
+- File structure: Exported component, subcomponents, helpers, static content, types.
+- Avoid unnecessary curly braces in conditional statements.
+- For single-line statements in conditionals, omit curly braces.
+- Use concise, one-line syntax for simple conditional statements (e.g., if (condition) doSomething()).
+- Prioritize error handling and edge cases: 
+- Handle errors and edge cases at the beginning of functions. 
+- Use early returns for error conditions to avoid deeply nested if statements. 
+- Place the happy path last in the function for improved readability. 
+- Avoid unnecessary else statements; use if-return pattern instead. 
+- Use guard clauses to handle preconditions and invalid states early. 
+- Implement proper error logging and user-friendly error messages. 
+- Consider using custom error types or error factories for consistent error handling.
+
+- Use functional components and TypeScript interfaces.
+- Use declarative JSX.
+- Use function, not const, for components.
+- Place static content and interfaces at file end.
+- Use content variables for static content outside render functions.
+- Wrap client components in Suspense with fallback.
+- Use dynamic loading for non-critical components.
+- Optimize images: WebP format, size data, lazy loading.
+- Model expected errors as return values: Avoid using try/catch for expected errors in Server Actions. Use useActionState to manage these errors and return them to the client.
+- Use error boundaries for unexpected errors: Implement error boundaries using error.tsx and global-error.tsx files to handle unexpected errors and provide a fallback UI.
+- Use useActionState with react-hook-form for form validation.
+- Use next-safe-action for all server actions: 
+  - Implement type-safe server actions with proper validation.
+  - Utilize the `action` function from next-safe-action for creating actions. 
+  - Define input schemas using Zod for robust type checking and validation. 
+  - Handle errors gracefully and return appropriate responses. 
+  - Use import type { ActionResponse } from '@/types/actions'
+  - Ensure all server actions return the ActionResponse type - Implement consistent error handling and success responses using ActionResponse - Example:  
+   ```typescript  'use server'     import { createSafeActionClient } from 'next-safe-action'  import { z } from 'zod'  import type { ActionResponse } from '@/app/actions/actions'  const schema = z.object({   value: z.string()  })  export const someAction = createSafeActionClient()   .schema(schema)   .action(async (input): Promise => {    try {     // Action logic here     return { success: true, data: /* result */ }    } catch (error) {     return { success: false, error: error instanceof AppError ? error : appErrors.UNEXPECTED_ERROR, }    }   })  ```

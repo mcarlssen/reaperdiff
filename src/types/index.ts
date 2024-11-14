@@ -7,12 +7,17 @@ export interface Clip {
 }
 
 export interface Change {
-  position: number;
-  type: 'changed' | 'added' | 'deleted';
-  originalPosition?: number;
+  revisedPosition: number;
+  type: 'added' | 'deleted' | 'changed';
+  controlPosition?: number;
+  controlLength?: number;
+  controlOffset?: number;
+  detectionMethod: 'overlap' | 'fingerprint' | 'position' | 'length';
 }
 
 export interface ClipFingerprint {
-  length: number;
-  offset: number;
+  revisedLength?: number;
+  revisedOffset?: number;
+  controlLength?: number;
+  controlOffset?: number;
 } 
