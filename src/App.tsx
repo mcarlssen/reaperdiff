@@ -1,11 +1,12 @@
 import { useCallback, useState, useRef, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { FontAwesomeIcon } from './fontawesome';
-import { Switch, FormControlLabel } from '@mui/material';
+import { Switch, FormControlLabel, Tooltip } from '@mui/material';
 import './App.css';
 import { Timeline } from './components/Timeline';
 import { detectChanges } from './components';
 import { Clip, Change } from './types';
+import { generateAlgorithmTooltip } from './components/helpers/generateAlgorithmTooltip';
 
 export default function App() {
   const [verbose, setVerbose] = useState<boolean>(true);
@@ -22,7 +23,9 @@ export default function App() {
   const [detectPositionsEnabled, setDetectPositionsEnabled] = useState<boolean>(false);
   const [detectLengthsEnabled, setDetectLengthsEnabled] = useState<boolean>(false);
   const [detectFingerprintEnabled, setDetectFingerprintEnabled] = useState<boolean>(true);
+  const [detectAddsDeletesEnabled, setDetectAddsDeletesEnabled] = useState<boolean>(true);
   const [hoveredPosition, setHoveredPosition] = useState<number | null>(null);
+  const [hasFiles, setHasFiles] = useState<boolean>(false);
 
   useEffect(() => {
     if (resultsContainerRef.current) {
@@ -45,14 +48,16 @@ export default function App() {
   const onDropControl = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length === 1) {
       setControlFile(acceptedFiles[0]);
+      setHasFiles(!!revisedFile);
     }
-  }, []);
+  }, [revisedFile]);
 
   const onDropRevised = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length === 1) {
       setRevisedFile(acceptedFiles[0]);
+      setHasFiles(!!controlFile);
     }
-  }, []);
+  }, [controlFile]);
 
   const compareFiles = async () => {
     if (!controlFile || !revisedFile) {
@@ -66,7 +71,8 @@ export default function App() {
           detectOverlaps: detectOverlapsEnabled,
           detectPositions: detectPositionsEnabled,
           detectLengths: detectLengthsEnabled,
-          detectFingerprint: detectFingerprintEnabled
+          detectFingerprint: detectFingerprintEnabled,
+          detectAddsDeletes: detectAddsDeletesEnabled
         });
       
       setControlClips(control);
@@ -87,6 +93,8 @@ export default function App() {
     setRevisedClips([]);
     setContainerWidth(null);
     setIsCompared(false);
+    setHasFiles(false);
+    setChanges([]);
   };
 
   const { getRootProps: getControlRootProps, getInputProps: getControlInputProps, isDragActive: isControlDragActive } = useDropzone({
@@ -104,6 +112,18 @@ export default function App() {
     },
     multiple: false
   });
+
+  useEffect(() => {
+    if (isCompared) {
+      setIsCompared(false);
+    }
+  }, [
+    detectOverlapsEnabled,
+    detectPositionsEnabled,
+    detectLengthsEnabled,
+    detectFingerprintEnabled,
+    detectAddsDeletesEnabled
+  ]);
 
     return (
     <div className="app-container">
@@ -140,27 +160,39 @@ export default function App() {
             <h2>Diff-style .RPP Comparison</h2>
             
             <div className="dropzone-container">
-                <div {...getControlRootProps()} className="dropzone">
+                <div 
+                  className={`dropzone ${controlFile ? 'has-file' : ''} ${isControlDragActive ? 'dragactive' : ''}`} 
+                  {...getControlRootProps()}
+                >
                     <input {...getControlInputProps()} />
-                    {isControlDragActive ? (
-                    <p>Drop the control file here...</p>
+                    {controlFile ? (
+                        <p>Selected: <span className="file-type">{controlFile.name}</span></p>
                     ) : (
-                    <div>
-                        <p>Drop <b>control</b> .rpp file here, or click to select</p>
-                        {controlFile && <p>Selected: {controlFile.name}</p>}
-                    </div>
+                        <p>
+                            {isControlDragActive ? (
+                                <>Drop <span className="dropzone-text-emphasis">control</span> file here</>
+                            ) : (
+                                <>Drop <span className="file-type">control</span> .rpp file here, or click to select</>
+                            )}
+                        </p>
                     )}
                 </div>
 
-                <div {...getRevisedRootProps()} className="dropzone">
+                <div 
+                  className={`dropzone ${revisedFile ? 'has-file' : ''} ${isRevisedDragActive ? 'dragactive' : ''}`} 
+                  {...getRevisedRootProps()}
+                >
                     <input {...getRevisedInputProps()} />
-                    {isRevisedDragActive ? (
-                    <p>Drop the <b>revised</b> .rpp file here...</p>
+                    {revisedFile ? (
+                        <p>Selected: <span className="file-type">{revisedFile.name}</span></p>
                     ) : (
-                    <div>
-                        <p>Drop revised .rpp file here, or click to select</p>
-                        {revisedFile && <p>Selected: {revisedFile.name}</p>}
-                    </div>
+                        <p>
+                            {isRevisedDragActive ? (
+                                <span className="dropzone-text-emphasis">Drop file here</span>
+                            ) : (
+                                <>Drop <span className="file-type">revised</span> .rpp file here, or click to select</>
+                            )}
+                        </p>
                     )}
                 </div>
             </div>
@@ -187,16 +219,22 @@ export default function App() {
                         }
                         label="Lengths"
                     />
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                checked={detectFingerprintEnabled}
-                                onChange={(e) => setDetectFingerprintEnabled(e.target.checked)}
-                                color="primary"
-                            />
-                        }
-                        label="Fingerprints"
-                    />
+                    <Tooltip 
+                        title={<div className="algorithm-tooltip">{generateAlgorithmTooltip('fingerprint')}</div>}
+                        placement="top"
+                        enterDelay={500}
+                    >
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    checked={detectFingerprintEnabled}
+                                    onChange={(e) => setDetectFingerprintEnabled(e.target.checked)}
+                                    color="primary"
+                                />
+                            }
+                            label="Fingerprints"
+                        />
+                    </Tooltip>
                     <FormControlLabel
                         control={
                             <Switch
@@ -207,12 +245,32 @@ export default function App() {
                         }
                         label="Positions"
                     />
+                    <Tooltip 
+                        title={<div className="algorithm-tooltip">{generateAlgorithmTooltip('addsdeletes')}</div>}
+                        placement="top"
+                        enterDelay={500}
+                    >
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    checked={detectAddsDeletesEnabled}
+                                    onChange={(e) => setDetectAddsDeletesEnabled(e.target.checked)}
+                                    color="primary"
+                                />
+                            }
+                            label="Adds/Deletes"
+                        />
+                    </Tooltip>
                 </div>
                 <div className="compare-button-container">
                     <button 
                         onClick={isCompared ? clearAll : compareFiles}
-                        disabled={!isCompared && (!controlFile || !revisedFile)}
-                        className={`compare-button ${isCompared ? 'clear-button' : ''}`}
+                        disabled={!controlFile && !revisedFile}
+                        className={`compare-button ${
+                            isCompared ? 'clear-button' : 
+                            (controlFile && revisedFile) ? 'ready' :
+                            (controlFile || revisedFile) ? 'partial' : ''
+                        }`}
                     >
                         {isCompared ? 'Clear' : 'Compare Files'}
                     </button>

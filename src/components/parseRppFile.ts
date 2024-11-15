@@ -16,6 +16,8 @@ export async function parseRppFile(file: File, verbose: boolean): Promise<Clip[]
       currentClip.POSITION = parseFloat(line.split(' ')[1]);
     } else if (line.startsWith('LENGTH')) {
       currentClip.LENGTH = parseFloat(line.split(' ')[1]);
+    } else if (line.startsWith('SOFFS')) {
+        currentClip.OFFSET = parseFloat(line.split(' ')[1]);
     } else if (line.startsWith('>')) {
       if (currentClip.IGUID && currentClip.POSITION !== undefined && currentClip.LENGTH !== undefined) {
         clips.push(currentClip as Clip);

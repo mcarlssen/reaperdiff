@@ -12,7 +12,7 @@ export interface Change {
   controlPosition?: number;
   controlLength?: number;
   controlOffset?: number;
-  detectionMethod: 'overlap' | 'fingerprint' | 'position' | 'length';
+  detectionMethod: 'overlap' | 'fingerprint' | 'position' | 'length' | 'addsdeletes';
 }
 
 export interface ClipFingerprint {
@@ -20,4 +20,12 @@ export interface ClipFingerprint {
   revisedOffset?: number;
   controlLength?: number;
   controlOffset?: number;
+}
+
+export interface DetectionOptions {
+  detectOverlaps: boolean
+  detectPositions: boolean
+  detectLengths: boolean
+  detectFingerprint: boolean
+  detectAddsDeletes: boolean
 } 

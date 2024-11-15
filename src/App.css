@@ -133,6 +133,40 @@ body {
   padding: 40px;
   text-align: center;
   cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: transparent;  /* Default state */
+}
+
+/* Empty state hover */
+.dropzone:not(.has-file):hover {
+  background-color: rgba(235, 180, 0, 0.05);
+}
+
+/* Filled state */
+.dropzone.has-file {
+  border-style: solid;
+  background-color: rgba(235, 180, 0, 0.05);
+}
+
+/* Remove background on hover when file is present */
+.dropzone.has-file:hover {
+  background-color: transparent;
+}
+
+/* Drag state text emphasis */
+.dropzone-text-emphasis {
+  color: var(--text-accent-color);
+  font-weight: bold;
+}
+
+/* Active drag state */
+.dropzone.dragactive {
+  border-color: var(--text-accent-color);
+  border-style: solid;
+}
+
+.dropzone.dragactive p {
+  color: var(--text-accent-color);
 }
 
 .button-container {
@@ -162,14 +196,47 @@ body {
   width: 50%;  /* Button takes 50% of container width */
   padding: 10px 20px;
   font-size: 16px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-sizing: border-box;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.compare-button:hover {
+  background-color: #cc9900;  /* Darker yellow on hover */
 }
 
 .compare-button:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
+  background-color: var(--border-color);
+  border: 1px solid var(--border-color-light);
 }
 
-.compare-button:enabled {
-  cursor: pointer;
+/* Partial state (one file) */
+.compare-button.partial {
+  background-color: var(--border-color-light);  /* Using the lighter grey variable */
+  color: var(--primary-bg);
+}
+
+/* Ready state (both files) */
+.compare-button.ready {
+  background-color: var(--text-accent-color);
+  color: var(--primary-bg);
+}
+
+/* Hover states */
+.compare-button.partial:hover {
+  background-color: var(--border-color);
+}
+
+.compare-button.ready:hover {
+  background-color: #cc9900;  /* Darker yellow */
 }
 
 .banner-right .MuiFormControlLabel-root {
@@ -247,16 +314,6 @@ h2 {
   padding: 10px;
   width: 100%;
   box-sizing: border-box;
-}
-
-.compare-button.clear-button {
-  background-color: var(--text-accent-color);
-  color: var(--primary-bg);
-  border: none;
-}
-
-.compare-button.clear-button:hover {
-  background-color: #cc9900;
 }
 
 .detection-options {
@@ -368,4 +425,13 @@ h2 {
     stroke: var(--text-accent-color);
     stroke-width: 2px;
     filter: brightness(1.2);
+}
+
+.algorithm-tooltip {
+    white-space: pre-line;
+}
+
+.dropzone-text-emphasis {
+  color: var(--text-accent-color);
+  font-weight: bold;
 }

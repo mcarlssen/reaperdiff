@@ -9,3 +9,6 @@ export function detectLengthChanges(
   
   return lengthDiff > TOLERANCE;
 } 
+
+// this length function is already done as part of detectFingerprint.ts.
+// What is this algorithm supposed to do that Fingerprint isn't already doing?

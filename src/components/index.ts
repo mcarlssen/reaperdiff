@@ -3,12 +3,15 @@ import { parseRppFile } from './parseRppFile';
 import { compareClips, findMatchingClip } from './detectFingerprint';
 import { detectOverlaps } from './detectOverlaps';
 import { detectLengthChanges } from './detectLengthChanges';
+import { detectNewClips } from './detectNewClips';
+import { detectDeletedClips } from './detectDeletedClips';
 
 interface DetectionOptions {
   detectOverlaps: boolean;
   detectPositions: boolean;
   detectLengths: boolean;
   detectFingerprint: boolean;
+  detectAddsDeletes: boolean;
 }
 
 export async function detectChanges(
@@ -25,6 +28,28 @@ export async function detectChanges(
   const controlClips = await parseRppFile(controlFile, verbose);
   const revisedClips = await parseRppFile(revisedFile, verbose);
   const changes: Change[] = [];
+  
+  // Only run adds/deletes detection if enabled
+  if (options.detectAddsDeletes) {
+    const newClipPositions = detectNewClips(controlClips, revisedClips);
+    const deletedClipPositions = detectDeletedClips(controlClips, revisedClips);
+    
+    newClipPositions.forEach(position => {
+      changes.push({
+        revisedPosition: position,
+        type: 'added',
+        detectionMethod: 'addsdeletes'
+      });
+    });
+    
+    deletedClipPositions.forEach(position => {
+      changes.push({
+        revisedPosition: position,
+        type: 'deleted',
+        detectionMethod: 'addsdeletes'
+      });
+    });
+  }
   
   let cumulativeShift = 0;
   
@@ -98,4 +123,6 @@ export { parseRppFile } from './parseRppFile';
 export { compareClips, findMatchingClip } from './detectFingerprint';
 export { detectOverlaps } from './detectOverlaps';
 export { detectLengthChanges } from './detectLengthChanges';
+export { detectNewClips } from './detectNewClips';
+export { detectDeletedClips } from './detectDeletedClips';
   
