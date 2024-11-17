@@ -1,7 +1,6 @@
+import { TOLERANCE } from '../constants'
 import { Clip } from '../types'
 import { findMatchingClip } from './detectFingerprint'
-
-const POSITION_TOLERANCE = 0.005 // 5ms tolerance for position comparisons
 
 /**
  * Determines if a clip is truly new by checking the context of surrounding clips
@@ -29,7 +28,7 @@ export function detectAddedClips(
         const expectedNextPosition = priorMatch.POSITION + priorMatch.LENGTH
 
         // If next clip's position matches (accounting for tolerance)
-        if (Math.abs(nextMatch.POSITION - expectedNextPosition) < POSITION_TOLERANCE) {
+        if (Math.abs(nextMatch.POSITION - expectedNextPosition) < TOLERANCE) {
           // This is definitely a new clip
           newClipPositions.push(currentClip.POSITION)
         }

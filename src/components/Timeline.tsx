@@ -3,6 +3,7 @@ import * as d3 from 'd3';
 import './Timeline.css';
 import { Clip, Change } from '../types';
 import { generateTooltip } from './helpers/generateTooltip'
+import { TOLERANCE } from '../constants'
 
 interface TimelineProps {
   revisedClips: Clip[];
@@ -20,9 +21,14 @@ export const Timeline: React.FC<TimelineProps> = ({
   hoveredPosition
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
-  const POSITION_TOLERANCE = 0.001;
 
   useEffect(() => {
+    console.log('Timeline received clips:', {
+      total: revisedClips.length,
+      deleted: revisedClips.filter(clip => clip.isDeleted).length,
+      changes
+    });
+
     console.log('Timeline useEffect triggered with:', {
       revisedClips,
       changes,
@@ -60,11 +66,22 @@ export const Timeline: React.FC<TimelineProps> = ({
 
     // Updated color determination function
     const getClipColor = (clip: Clip): string => {
-      const change = changes.find(c => Math.abs(c.revisedPosition - clip.POSITION) < POSITION_TOLERANCE);
-      if (!change) return 'unchanged';
-      return change.type === 'added' ? 'deleted-added' : 
-             change.type === 'changed' ? 'modified' : 'unchanged';
-    };
+        console.log('Processing clip color:', {
+        clip,
+            isDeleted: clip.isDeleted,
+            matchingChange: changes.find(c => Math.abs(c.revisedPosition - clip.POSITION) < TOLERANCE)
+        });
+
+        // Check for deleted clips first
+      if (clip.isDeleted) return 'deleted'
+      
+      const change = changes.find(c => Math.abs(c.revisedPosition - clip.POSITION) < TOLERANCE)
+      if (!change) return 'unchanged'
+      
+      return change.type === 'added' ? 'added' : 
+             change.type === 'changed' ? 'modified' : 
+             change.type === 'deleted' ? 'deleted' : 'unchanged'
+    }
 
     // Draw clips in the center of the available space
     const clipHeight = 200; // Increased height for better visibility

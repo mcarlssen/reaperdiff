@@ -35,11 +35,6 @@ body {
     color: var(--text-color);
 }
 
-.app-title, .callsign,
-h2 {
-    text-transform: uppercase;
-}
-
 .app-container {
     display: grid;
     grid-template-rows: 80px 1fr 40px;
@@ -50,12 +45,10 @@ h2 {
     overflow: hidden;
 }
 
-.app-title, .fa-solid {
-    color: var(--text-accent-color);
-    filter:drop-shadow(1px 2px 1px #000);
-}
-
 .app-title {
+    text-transform: uppercase;
+    color: var(--text-accent-color);
+    filter: drop-shadow(1px 2px 1px #000);
     font-family: 'Frutiger Bold', sans-serif;
     font-size: 42px;
 }
@@ -69,9 +62,7 @@ h2 {
     border-radius: 15px;
     width: calc(100% - 40px);
     max-width: inherit;
-    margin: 0 auto;
-    margin-top:10px;
-    box-sizing: border-box;
+    margin: 10px auto 0;
 }
 
 .banner-left, .banner-right {
@@ -119,10 +110,6 @@ h2 {
     box-sizing: border-box;
 }
 
-.container h1 {
-    margin-bottom: 20px;
-}
-
 /* drop zone styles */
 
 .dropzone-container {
@@ -148,7 +135,7 @@ h2 {
   border: 2px dashed var(--text-accent-color);
   border-radius: 4px;
   height:122px;
-  padding: 40px;
+  padding: 48px;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -432,6 +419,24 @@ h2 {
 .result-item {
     cursor: pointer;
     transition: color 0.2s ease;
+    padding: 4px 8px;
+    margin: 2px 0;
+    border-radius: 4px;
+}
+
+.result-item.added {
+  background-color: rgba(0, 255, 0, 0.1);
+  border-left: 3px solid #4caf50;
+}
+
+.result-item.deleted {
+  background-color: rgba(255, 0, 0, 0.1);
+  border-left: 3px solid #f44336;
+}
+
+.result-item.changed {
+  background-color: rgba(255, 165, 0, 0.1);
+  border-left: 3px solid #ff9800;
 }
 
 .result-item:hover {
@@ -544,7 +549,7 @@ h2 {
   display: flex !important;
   flex-direction: row !important;
   gap: 24px;
-  margin: 5px 0;
+  margin: -5px 0;
   justify-content: center;
 }
 
@@ -555,8 +560,8 @@ h2 {
 
 /* Ensure labels don't wrap */
 .dataset-selector .MuiFormControlLabel-root {
-  margin: 0;
-  white-space: nowrap;
+    padding-top:5px;
+    white-space: nowrap;
 }
 
 /* Maintain text color and spacing */

@@ -43,7 +43,7 @@ export async function parseRppFile(input: File | string, verbose: boolean): Prom
     }
   }, [] as Clip[]);
 
-  verbose && console.log('Parsed Clips (unique):', uniqueClips);
+  console.log('Parsed Clips (unique):', uniqueClips);
 
   return uniqueClips;
 } 

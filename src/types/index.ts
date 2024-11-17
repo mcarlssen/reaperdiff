@@ -4,6 +4,7 @@ export interface Clip {
   OFFSET?: number;
   NAME?: string;
   IGUID?: string;
+  isDeleted?: true
 }
 
 export interface Change {

@@ -34,6 +34,10 @@
   fill: #ffaa00;
 }
 
-.timeline-clip.deleted-added {
-  fill: #ff4444;
+.timeline-clip.added {
+  fill: #ff7044;
+} 
+
+.timeline-clip.deleted {
+    fill: #ff4444;
 } 

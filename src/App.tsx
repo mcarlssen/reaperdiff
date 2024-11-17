@@ -23,7 +23,7 @@ export default function App() {
   const [detectOverlapsEnabled, setDetectOverlapsEnabled] = useState<boolean>(false);
   const [detectPositionsEnabled, setDetectPositionsEnabled] = useState<boolean>(false);
   const [detectLengthsEnabled, setDetectLengthsEnabled] = useState<boolean>(false);
-  const [detectFingerprintEnabled, setDetectFingerprintEnabled] = useState<boolean>(true);
+  const [detectFingerprintEnabled, setDetectFingerprintEnabled] = useState<boolean>(false);
   const [detectAddsDeletesEnabled, setDetectAddsDeletesEnabled] = useState<boolean>(true);
   const [hoveredPosition, setHoveredPosition] = useState<number | null>(null);
   const [hasFiles, setHasFiles] = useState<boolean>(false);
@@ -416,17 +416,41 @@ export default function App() {
                                 <ul>
                                     {changes
                                         .sort((a, b) => a.revisedPosition - b.revisedPosition)
-                                        .map((change, index) => (
-                                            <li 
-                                                key={index}
-                                                onMouseEnter={() => setHoveredPosition(change.revisedPosition)}
-                                                onMouseLeave={() => setHoveredPosition(null)}
-                                                className="result-item"
-                                            >
-                                                {change.detectionMethod.charAt(0).toUpperCase() + 
-                                                 change.detectionMethod.slice(1)}: {change.revisedPosition.toFixed(2)}
-                                            </li>
-                                        ))}
+                                        .map((change, index) => {
+                                            const changeDescription = (() => {
+                                                const position = change.revisedPosition.toFixed(2)
+                                                const method = change.detectionMethod.charAt(0).toUpperCase() + 
+                                                      change.detectionMethod.slice(1)
+                                                
+                                                switch (change.type) {
+                                                    case 'added':
+                                                        return `Added clip at ${position} (${method})`
+                                                    case 'deleted':
+                                                        return `Deleted clip at ${position} (${method})`
+                                                    case 'changed':
+                                                        if (change.detectionMethod === 'fingerprint')
+                                                            return `Clip moved to ${position} (${method})`
+                                                        if (change.detectionMethod === 'position')
+                                                            return `Clip position changed to ${position} (${method})`
+                                                        if (change.detectionMethod === 'length')
+                                                            return `Clip length changed at ${position} (${method})`
+                                                        return `Clip modified at ${position} (${method})`
+                                                    default:
+                                                        return `Unknown change at ${position} (${method})`
+                                                }
+                                            })()
+
+                                            return (
+                                                <li 
+                                                    key={index}
+                                                    onMouseEnter={() => setHoveredPosition(change.revisedPosition)}
+                                                    onMouseLeave={() => setHoveredPosition(null)}
+                                                    className={`result-item ${change.type}`}
+                                                >
+                                                    {changeDescription}
+                                                </li>
+                                            )
+                                        })}
                                 </ul>
                             </div>
                         ) : (

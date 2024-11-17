@@ -5,6 +5,7 @@ import { detectOverlaps } from './detectOverlaps';
 import { detectLengthChanges } from './detectLengthChanges';
 import { detectAddedClips } from './detectAddedClips';
 import { detectDeletedClips } from './detectDeletedClips';
+import { TOLERANCE } from '../constants'
 
 export async function detectChanges(
   controlFile: File | string,
@@ -18,14 +19,35 @@ export async function detectChanges(
   changes: Change[];
 }> {
   const controlClips = await parseRppFile(controlFile, verbose);
-  const revisedClips = await parseRppFile(revisedFile, verbose);
+  let revisedClips = await parseRppFile(revisedFile, verbose);
   const changes: Change[] = [];
   
   // Only run adds/deletes detection if enabled
   if (options.detectAddsDeletes) {
     const newClipPositions = detectAddedClips(controlClips, revisedClips);
-    const deletedClipPositions = detectDeletedClips(controlClips, revisedClips);
+    const deletedClips = detectDeletedClips(controlClips, revisedClips);
     
+    console.log('Deleted clips found:', deletedClips);
+    
+    // Create full clips for deleted items
+    const deletedClipsWithMetadata = controlClips
+      .filter(clip => 
+        deletedClips.some(
+          deletedClip => Math.abs(deletedClip.POSITION - clip.POSITION) < TOLERANCE
+        )
+      )
+      .map(clip => ({
+        ...clip,
+        isDeleted: true as const
+      }));
+    
+    console.log('Deleted clips with metadata:', deletedClipsWithMetadata);
+    
+    // Add deleted clips to the revised clips array and sort by position
+    revisedClips = [...revisedClips, ...deletedClipsWithMetadata]
+      .sort((a, b) => a.POSITION - b.POSITION);
+    
+    // Add changes for new clips
     newClipPositions.forEach(position => {
       changes.push({
         revisedPosition: position,
@@ -34,10 +56,14 @@ export async function detectChanges(
       });
     });
     
-    deletedClipPositions.forEach(position => {
+    // Add changes for deleted clips
+    deletedClips.forEach(clip => {
       changes.push({
-        revisedPosition: position,
+        revisedPosition: clip.POSITION,
         type: 'deleted',
+        controlPosition: clip.POSITION,
+        controlLength: clip.LENGTH,
+        controlOffset: clip.OFFSET || 0,
         detectionMethod: 'addsdeletes'
       });
     });
@@ -97,9 +123,12 @@ export async function detectChanges(
   if (verbose) {
     console.log('Detected changes:', {
       changes,
+      cumulativeShift,
       overlaps: options.detectOverlaps ? detectOverlaps(revisedClips) : []
     });
   }
+
+  console.log('Revised clips after adding deleted:', revisedClips.filter(clip => clip.isDeleted));
 
   return {
     changedPositions: changes.map(change => change.revisedPosition),
