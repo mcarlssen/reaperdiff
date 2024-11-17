@@ -6,7 +6,7 @@ const POSITION_TOLERANCE = 0.005 // 5ms tolerance for position comparisons
 /**
  * Determines if a clip is truly new by checking the context of surrounding clips
  */
-export function detectNewClips(
+export function detectAddedClips(
   controlClips: Clip[],
   revisedClips: Clip[],
 ): number[] {

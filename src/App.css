@@ -30,14 +30,14 @@
     box-sizing: border-box;
 }
 
-.app-title, .callsign,
-h2 {
-    text-transform: uppercase;
-}
-
 body {
     background-color: var(--primary-bg);
     color: var(--text-color);
+}
+
+.app-title, .callsign,
+h2 {
+    text-transform: uppercase;
 }
 
 .app-container {
@@ -50,19 +50,6 @@ body {
     overflow: hidden;
 }
 
-.top-banner {
-    display: grid;
-    grid-template-columns: 82% 18%;
-    align-items: center;
-    padding: 0;
-    border-radius: 15px;
-    width: calc(100% - 40px);
-    max-width: inherit;
-    margin: 0 auto;
-    margin-top:10px;
-    box-sizing: border-box;
-}
-
 .app-title, .fa-solid {
     color: var(--text-accent-color);
     filter:drop-shadow(1px 2px 1px #000);
@@ -71,6 +58,20 @@ body {
 .app-title {
     font-family: 'Frutiger Bold', sans-serif;
     font-size: 42px;
+}
+
+.top-banner {
+    display: grid;
+    grid-template-columns: 80% 18.25%;
+    gap: 20px;
+    align-items: center;
+    padding: 0;
+    border-radius: 15px;
+    width: calc(100% - 40px);
+    max-width: inherit;
+    margin: 0 auto;
+    margin-top:10px;
+    box-sizing: border-box;
 }
 
 .banner-left, .banner-right {
@@ -90,10 +91,15 @@ body {
 }
 
 .banner-right {
-    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     justify-content: center;
-    margin-left: 20px;
+    align-items: flex-start;
+    height: 100%;
+    padding-left: 20px;
 }
+
 .main-content {
     display: grid;
     grid-template-columns: 1fr;
@@ -124,12 +130,24 @@ body {
   gap: 20px;  /* Space between dropzones */
   margin-bottom: 20px;
   margin-top: 20px;
+  opacity: 0;
+  animation: fadeIn 0.2s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .dropzone {
   flex: 1;  /* Each dropzone takes equal space */
   border: 2px dashed var(--text-accent-color);
   border-radius: 4px;
+  height:122px;
   padding: 40px;
   text-align: center;
   cursor: pointer;
@@ -434,4 +452,131 @@ h2 {
 .dropzone-text-emphasis {
   color: var(--text-accent-color);
   font-weight: bold;
+}
+
+.switch-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+/* Optional: if you want the switches themselves centered */
+.switch-container .MuiFormControlLabel-root {
+  margin: 0;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+/* Update dropzone styling for disabled state */
+.dropzone.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.test-mode-indicator {
+  margin: 20px 0;
+  height: 122px;  /* Match dropzone container height */
+  background-color: rgba(235, 180, 0, 0.05);  /* Using your existing yellow fade */
+  border: 2px solid var(--text-accent-color);
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  animation: fadeIn 0.2s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.test-mode-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.test-mode-content h3 {
+  color: var(--text-accent-color);
+  font-family: 'Frutiger Bold', sans-serif;
+  font-size: 24px;
+  margin: 0;
+}
+
+/* Adjust switch styling to match your theme */
+.test-mode-content .MuiFormControlLabel-root {
+  margin: 0;
+}
+
+.test-mode-content .MuiFormControlLabel-label {
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.test-mode-indicator,
+.dropzone-container {
+  opacity: 0;
+  animation: fadeIn 0.2s ease-in-out forwards;
+}
+
+.test-mode-indicator.fade-out,
+.dropzone-container.fade-out {
+  animation: fadeOut 0.2s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.dataset-selector {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 24px;
+  margin: 5px 0;
+  justify-content: center;
+}
+
+/* Target the actual container of radio buttons */
+.dataset-selector .MuiFormGroup-root {
+  flex-direction: row !important;
+}
+
+/* Ensure labels don't wrap */
+.dataset-selector .MuiFormControlLabel-root {
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* Maintain text color and spacing */
+.dataset-selector .MuiFormControlLabel-label {
+  color: var(--text-color);
+}
+
+.MuiRadio-root {
+  color: var(--text-accent-color) !important;
+}
+
+.MuiRadio-root.Mui-checked {
+  color: var(--text-accent-color) !important;
+}
+
+.dataset-error {
+  color: var(--error-color);
+  padding: 16px;
+  text-align: center;
+  border: 1px solid var(--error-color);
+  border-radius: 4px;
+  margin: 16px 0;
 }

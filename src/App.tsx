@@ -1,12 +1,13 @@
 import { useCallback, useState, useRef, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { FontAwesomeIcon } from './fontawesome';
-import { Switch, FormControlLabel, Tooltip } from '@mui/material';
+import { Switch, FormControlLabel, Tooltip, Radio, RadioGroup } from '@mui/material';
 import './App.css';
 import { Timeline } from './components/Timeline';
 import { detectChanges } from './components';
 import { Clip, Change } from './types';
 import { generateAlgorithmTooltip } from './components/helpers/generateAlgorithmTooltip';
+import { testDatasets, getDatasetById } from './testData/index';
 
 export default function App() {
   const [verbose, setVerbose] = useState<boolean>(true);
@@ -26,6 +27,13 @@ export default function App() {
   const [detectAddsDeletesEnabled, setDetectAddsDeletesEnabled] = useState<boolean>(true);
   const [hoveredPosition, setHoveredPosition] = useState<number | null>(null);
   const [hasFiles, setHasFiles] = useState<boolean>(false);
+  const [testMode, setTestMode] = useState<boolean>(false);
+  const [showDropzones, setShowDropzones] = useState(true);
+  const [showTestMode, setShowTestMode] = useState(false);
+  const [fadeOutDropzones, setFadeOutDropzones] = useState(false);
+  const [fadeOutTestMode, setFadeOutTestMode] = useState(false);
+  const [selectedDatasetId, setSelectedDatasetId] = useState<string>('')
+  const [datasetError, setDatasetError] = useState<string | null>(null)
 
   useEffect(() => {
     if (resultsContainerRef.current) {
@@ -60,14 +68,27 @@ export default function App() {
   }, [controlFile]);
 
   const compareFiles = async () => {
-    if (!controlFile || !revisedFile) {
+    let controlInput: File | string | null = controlFile;
+    let revisedInput: File | string | null = revisedFile;
+
+    if (testMode) {
+      const dataset = getDatasetById(selectedDatasetId)
+      if (!dataset) {
+        alert('Please select a test dataset')
+        return
+      }
+      controlInput = dataset.controlData
+      revisedInput = dataset.revisedData
+    }
+
+    if (!controlInput || !revisedInput) {
       alert('Please select both files first');
       return;
     }
 
     try {
       const { changedPositions, controlClips: control, revisedClips: revised, changes } = 
-        await detectChanges(controlFile, revisedFile, verbose, {
+        await detectChanges(controlInput, revisedInput, verbose, {
           detectOverlaps: detectOverlapsEnabled,
           detectPositions: detectPositionsEnabled,
           detectLengths: detectLengthsEnabled,
@@ -102,7 +123,8 @@ export default function App() {
     accept: {
       'application/x-reaper-project': ['.rpp']
     },
-    multiple: false
+    multiple: false,
+    disabled: testMode,
   });
 
   const { getRootProps: getRevisedRootProps, getInputProps: getRevisedInputProps, isDragActive: isRevisedDragActive } = useDropzone({
@@ -125,6 +147,32 @@ export default function App() {
     detectAddsDeletesEnabled
   ]);
 
+  useEffect(() => {
+    if (testMode) {
+      // Start fade out of dropzones
+      setFadeOutDropzones(true);
+      setTimeout(() => {
+        setShowDropzones(false);
+        setFadeOutDropzones(false);
+        setShowTestMode(true);
+        // Clear files after transition
+        setControlFile(null);
+        setRevisedFile(null);
+        setIsCompared(false);
+      }, 200);
+    } else {
+      // Start fade out of test mode
+      setFadeOutTestMode(true);
+      setTimeout(() => {
+        setShowTestMode(false);
+        setFadeOutTestMode(false);
+        setShowDropzones(true);
+        setIsCompared(false);
+        clearAll();
+      }, 200);
+    }
+  }, [testMode]);
+
     return (
     <div className="app-container">
         <div className="top-banner">
@@ -139,19 +187,30 @@ export default function App() {
                 </div>
             </div>
             <div className="banner-right">
-                <FormControlLabel
-                    control={
-                        <Switch
-                            checked={verbose}
-                            onChange={(e) => {
-                                setVerbose(e.target.checked);
-                                console.log('Verbose logging:', e.target.checked);
-                            }}
-                            color="primary"
-                        />
-                    }
-                    label="Console logging"
-                />
+                <div className="switch-container">
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={verbose}
+                                onChange={(e) => setVerbose(e.target.checked)}
+                                color="primary"
+                            />
+                        }
+                        label="Console Logging"
+                    />
+                </div>
+                <div className="switch-container">
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={testMode}
+                                onChange={(e) => setTestMode(e.target.checked)}
+                                color="primary"
+                            />
+                        }
+                        label="Test Mode"
+                    />
+                </div>
             </div>
         </div>
         
@@ -159,10 +218,59 @@ export default function App() {
             <div className="container">
             <h2>Diff-style .RPP Comparison</h2>
             
-            <div className="dropzone-container">
+            {showTestMode ? (
+              <div className={`test-mode-indicator ${fadeOutTestMode ? 'fade-out' : ''}`}>
+                <div className="test-mode-content">
+                  <h3>TEST MODE</h3>
+                  {datasetError ? (
+                    <div className="dataset-error">
+                      Error loading datasets: {datasetError}
+                    </div>
+                  ) : testDatasets.length === 0 ? (
+                    <div className="dataset-error">
+                      No test datasets found
+                    </div>
+                  ) : (
+                    <RadioGroup 
+                      className="dataset-selector"
+                      value={selectedDatasetId}
+                      onChange={(e) => {
+                        setSelectedDatasetId(e.target.value)
+                        setIsCompared(false)
+                      }}
+                    >
+                      {testDatasets.map(dataset => (
+                        <Tooltip 
+                          key={dataset.id}
+                          title={dataset.description}
+                          placement="top"
+                          PopperProps={{
+                            modifiers: [{
+                              name: 'offset',
+                                options: {
+                                  offset: [0, -16],
+                                },
+                            }],
+                          }}
+                        >
+                          <FormControlLabel
+                            value={dataset.id}
+                            control={<Radio />}
+                            label={dataset.name}
+                          />
+                        </Tooltip>
+                      ))}
+                    </RadioGroup>
+                  )}
+                </div>
+              </div>
+            ) : showDropzones ? (
+              <div className={`dropzone-container ${fadeOutDropzones ? 'fade-out' : ''}`}>
                 <div 
-                  className={`dropzone ${controlFile ? 'has-file' : ''} ${isControlDragActive ? 'dragactive' : ''}`} 
-                  {...getControlRootProps()}
+                  className={`dropzone ${controlFile ? 'has-file' : ''} ${
+                    testMode ? 'disabled' : ''
+                  }`} 
+                  {...getControlRootProps({ disabled: testMode })}
                 >
                     <input {...getControlInputProps()} />
                     {controlFile ? (
@@ -179,8 +287,10 @@ export default function App() {
                 </div>
 
                 <div 
-                  className={`dropzone ${revisedFile ? 'has-file' : ''} ${isRevisedDragActive ? 'dragactive' : ''}`} 
-                  {...getRevisedRootProps()}
+                  className={`dropzone ${revisedFile ? 'has-file' : ''} ${
+                    testMode ? 'disabled' : ''
+                  }`} 
+                  {...getRevisedRootProps({ disabled: testMode })}
                 >
                     <input {...getRevisedInputProps()} />
                     {revisedFile ? (
@@ -195,7 +305,8 @@ export default function App() {
                         </p>
                     )}
                 </div>
-            </div>
+              </div>
+            ) : null}
 
             <div className="button-container">
                 <div className="detection-options">
@@ -265,9 +376,10 @@ export default function App() {
                 <div className="compare-button-container">
                     <button 
                         onClick={isCompared ? clearAll : compareFiles}
-                        disabled={!controlFile && !revisedFile}
+                        disabled={testMode ? !selectedDatasetId : (!controlFile && !revisedFile)}
                         className={`compare-button ${
                             isCompared ? 'clear-button' : 
+                            testMode ? (selectedDatasetId ? 'ready' : '') :
                             (controlFile && revisedFile) ? 'ready' :
                             (controlFile || revisedFile) ? 'partial' : ''
                         }`}

@@ -29,3 +29,11 @@ export interface DetectionOptions {
   detectFingerprint: boolean
   detectAddsDeletes: boolean
 } 
+
+export interface TestDataset {
+    id: string
+    name: string
+    description: string
+    controlData: string
+    revisedData: string
+  }

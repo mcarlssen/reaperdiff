@@ -1,7 +1,16 @@
 import { Clip } from '../types';
 
-export async function parseRppFile(file: File, verbose: boolean): Promise<Clip[]> {
-  const data = await file.text();
+export async function parseRppFile(input: File | string, verbose: boolean): Promise<Clip[]> {
+  let data: string;
+
+  if (typeof input === 'string') {
+    // Input is a string containing the file content
+    data = input;
+  } else {
+    // Input is a File object
+    data = await input.text();
+  }
+
   const lines = data.split('\n');
   const clips: Clip[] = [];
   let currentClip: Partial<Clip> = {};
@@ -17,7 +26,7 @@ export async function parseRppFile(file: File, verbose: boolean): Promise<Clip[]
     } else if (line.startsWith('LENGTH')) {
       currentClip.LENGTH = parseFloat(line.split(' ')[1]);
     } else if (line.startsWith('SOFFS')) {
-        currentClip.OFFSET = parseFloat(line.split(' ')[1]);
+      currentClip.OFFSET = parseFloat(line.split(' ')[1]);
     } else if (line.startsWith('>')) {
       if (currentClip.IGUID && currentClip.POSITION !== undefined && currentClip.LENGTH !== undefined) {
         clips.push(currentClip as Clip);

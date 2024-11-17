@@ -1,29 +1,21 @@
-import { Clip, Change } from '../types';
+import { Clip, Change, DetectionOptions } from '../types';
 import { parseRppFile } from './parseRppFile';
 import { compareClips, findMatchingClip } from './detectFingerprint';
 import { detectOverlaps } from './detectOverlaps';
 import { detectLengthChanges } from './detectLengthChanges';
-import { detectNewClips } from './detectNewClips';
+import { detectAddedClips } from './detectAddedClips';
 import { detectDeletedClips } from './detectDeletedClips';
 
-interface DetectionOptions {
-  detectOverlaps: boolean;
-  detectPositions: boolean;
-  detectLengths: boolean;
-  detectFingerprint: boolean;
-  detectAddsDeletes: boolean;
-}
-
 export async function detectChanges(
-  controlFile: File, 
-  revisedFile: File, 
+  controlFile: File | string,
+  revisedFile: File | string,
   verbose: boolean,
   options: DetectionOptions
 ): Promise<{
-  changedPositions: number[],
-  controlClips: Clip[],
-  revisedClips: Clip[],
-  changes: Change[]
+  changedPositions: number[];
+  controlClips: Clip[];
+  revisedClips: Clip[];
+  changes: Change[];
 }> {
   const controlClips = await parseRppFile(controlFile, verbose);
   const revisedClips = await parseRppFile(revisedFile, verbose);
@@ -31,7 +23,7 @@ export async function detectChanges(
   
   // Only run adds/deletes detection if enabled
   if (options.detectAddsDeletes) {
-    const newClipPositions = detectNewClips(controlClips, revisedClips);
+    const newClipPositions = detectAddedClips(controlClips, revisedClips);
     const deletedClipPositions = detectDeletedClips(controlClips, revisedClips);
     
     newClipPositions.forEach(position => {
@@ -105,7 +97,6 @@ export async function detectChanges(
   if (verbose) {
     console.log('Detected changes:', {
       changes,
-      cumulativeShift,
       overlaps: options.detectOverlaps ? detectOverlaps(revisedClips) : []
     });
   }
@@ -123,6 +114,6 @@ export { parseRppFile } from './parseRppFile';
 export { compareClips, findMatchingClip } from './detectFingerprint';
 export { detectOverlaps } from './detectOverlaps';
 export { detectLengthChanges } from './detectLengthChanges';
-export { detectNewClips } from './detectNewClips';
+export { detectAddedClips } from './detectAddedClips';
 export { detectDeletedClips } from './detectDeletedClips';
   
