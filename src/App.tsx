@@ -34,6 +34,7 @@ export default function App() {
   const [fadeOutTestMode, setFadeOutTestMode] = useState(false);
   const [selectedDatasetId, setSelectedDatasetId] = useState<string>('')
   const [datasetError, setDatasetError] = useState<string | null>(null)
+  const [overlappingClips, setOverlappingClips] = useState<number[]>([])
 
   useEffect(() => {
     if (resultsContainerRef.current) {
@@ -87,19 +88,30 @@ export default function App() {
     }
 
     try {
-      const { changedPositions, controlClips: control, revisedClips: revised, changes } = 
-        await detectChanges(controlInput, revisedInput, verbose, {
+      const { 
+        changedPositions, 
+        controlClips, 
+        revisedClips, 
+        changes,
+        overlappingClips 
+      } = await detectChanges(
+        controlInput, 
+        revisedInput, 
+        verbose, 
+        {
           detectOverlaps: detectOverlapsEnabled,
           detectPositions: detectPositionsEnabled,
           detectLengths: detectLengthsEnabled,
           detectFingerprint: detectFingerprintEnabled,
           detectAddsDeletes: detectAddsDeletesEnabled
-        });
+        }
+      );
       
-      setControlClips(control);
-      setRevisedClips(revised);
+      setControlClips(controlClips);
+      setRevisedClips(revisedClips);
       setResults(changedPositions);
       setChanges(changes);
+      setOverlappingClips(overlappingClips);
       setIsCompared(true);
     } catch (error) {
       console.error("Error detecting changes:", error);
@@ -116,6 +128,7 @@ export default function App() {
     setIsCompared(false);
     setHasFiles(false);
     setChanges([]);
+    setOverlappingClips([]);
   };
 
   const { getRootProps: getControlRootProps, getInputProps: getControlInputProps, isDragActive: isControlDragActive } = useDropzone({
@@ -318,7 +331,7 @@ export default function App() {
                                 color="primary"
                             />
                         }
-                        label="Overlaps"
+                        label="Source Media Change"
                     />
                     <FormControlLabel
                         control={
@@ -392,20 +405,14 @@ export default function App() {
             {results !== null && (
                 <div className="results-container" ref={resultsContainerRef}>
                     <>
-                        <h2>Results</h2>
-                        {console.log('Render conditions:', {
-                            controlClipsLength: controlClips.length,
-                            revisedClipsLength: revisedClips.length,
-                            containerWidth,
-                            shouldRenderTimeline: controlClips.length > 0 && revisedClips.length > 0 && containerWidth
-                        })}
                         {controlClips.length > 0 && revisedClips.length > 0 && containerWidth ? (
                           <Timeline 
                             revisedClips={revisedClips}
                             width={containerWidth}
-                            height={320}
+                            height={360}
                             changes={changes}
                             hoveredPosition={hoveredPosition}
+                            overlappingClips={overlappingClips}
                           />
                         ) : (
                           <p>Loading timeline...</p>
@@ -434,7 +441,7 @@ export default function App() {
                                                             return `Clip position changed to ${position} (${method})`
                                                         if (change.detectionMethod === 'length')
                                                             return `Clip length changed at ${position} (${method})`
-                                                        return `Clip modified at ${position} (${method})`
+                                                        return `Modified clip at ${position} (${method})`
                                                     default:
                                                         return `Unknown change at ${position} (${method})`
                                                 }

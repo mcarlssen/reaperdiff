@@ -1,3 +1,14 @@
+# NOTES
+
+Since it's impossible to tell the diference between a clip that has been intentionally and unintentionally deleted, it's also impossible to detect when there is overlap on a deleted clip.
+
+_The algorithm assumes that deletions are intentional, and ignores overlaps with deleted clips._
+
+_Currently, the algorithm does NOT ignore muted clips, and treats these like normal clips._
+
+
+/* ------------------------------------------------------------------------------------------------ */
+
 Feature Requirements for Change Detection in Revised File
 1. Parse and Structure .RPP Files
 

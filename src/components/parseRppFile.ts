@@ -19,8 +19,6 @@ export async function parseRppFile(input: File | string, verbose: boolean): Prom
     const line = lines[i].trim();
     if (line.startsWith('<ITEM')) {
       currentClip = {};
-    } else if (line.startsWith('IGUID')) {
-      currentClip.IGUID = line.split(' ')[1];
     } else if (line.startsWith('POSITION')) {
       currentClip.POSITION = parseFloat(line.split(' ')[1]);
     } else if (line.startsWith('LENGTH')) {
@@ -28,22 +26,17 @@ export async function parseRppFile(input: File | string, verbose: boolean): Prom
     } else if (line.startsWith('SOFFS')) {
       currentClip.OFFSET = parseFloat(line.split(' ')[1]);
     } else if (line.startsWith('>')) {
-      if (currentClip.IGUID && currentClip.POSITION !== undefined && currentClip.LENGTH !== undefined) {
+      if (currentClip.POSITION !== undefined && currentClip.LENGTH !== undefined) {
         clips.push(currentClip as Clip);
       }
     }
   }
 
-  const uniqueClips = clips.reduce((acc, current) => {
-    const x = acc.find(item => item.IGUID === current.IGUID);
-    if (!x) {
-      return acc.concat([current]);
-    } else {
-      return acc;
-    }
-  }, [] as Clip[]);
+  const sortedClips = clips.sort((a, b) => a.POSITION - b.POSITION);
 
-  console.log('Parsed Clips (unique):', uniqueClips);
+  if (verbose) {
+    console.log('Parsed Clips:', sortedClips);
+  }
 
-  return uniqueClips;
+  return sortedClips;
 } 

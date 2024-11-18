@@ -13,13 +13,21 @@
 }
 
 :root {
-    --primary-bg: #1a1a1a;
+    --primary-bg: #2e2836; /* raisin black */
+    --secondary-bg: #3c3446;
+    --border-color: #50455e;
+/*    --primary-bg: #1a1a1a; 
     --secondary-bg: #2a2a2a;
-    --border-color: #3a3a3a;
+    --border-color: #3a3a3a; */
     --border-color-light: #4e4e4e;
     --text-color: #ddd;
     --text-accent-color: #ebb400;
     --accent-color: #4caf50;
+
+    --added-clip-color: #719150;
+    --deleted-clip-color: #bf4136;
+    --modified-clip-color: #f5853f;
+    --unchanged-clip-color: #086788;
 }
 
 /* Add these global styles */
@@ -276,16 +284,11 @@ body {
 
 .results-container {
   margin-top: 40px;
-  padding: 20px;
-  background-color: var(--primary-bg);
+  padding: 0px;
   border-top: 1px solid var(--border-color);
   border-radius: 8px;
   width: 100%;
   box-sizing: border-box;
-}
-
-h2 {
-  color: var(--text-color);
 }
 
 .results-list {
@@ -313,7 +316,7 @@ h2 {
 }
 
 .results-container svg {
-  margin-top: 20px;
+  margin-top: 0px;
   background-color: var(--border-color);
   border-radius: 8px;
   padding: 10px;
@@ -419,35 +422,38 @@ h2 {
 .result-item {
     cursor: pointer;
     transition: color 0.2s ease;
-    padding: 4px 8px;
-    margin: 2px 0;
+    margin: 4px 0;
     border-radius: 4px;
 }
 
 .result-item.added {
-  background-color: rgba(0, 255, 0, 0.1);
+  background-color: #71915055;
   border-left: 3px solid #4caf50;
+  padding-left:7px;
 }
 
 .result-item.deleted {
-  background-color: rgba(255, 0, 0, 0.1);
+  background-color: #bf413655;
   border-left: 3px solid #f44336;
+  padding-left:7px;
 }
 
 .result-item.changed {
-  background-color: rgba(255, 165, 0, 0.1);
+  background-color: #f5853f55;
   border-left: 3px solid #ff9800;
+  padding-left:7px;
 }
 
-.result-item:hover {
-    color: var(--text-accent-color);
+.result-item.added:hover {
+    color: var(--added-clip-color);
 }
 
-/* Add to your existing Timeline styles */
-.clip.hovered rect {
-    stroke: var(--text-accent-color);
-    stroke-width: 2px;
-    filter: brightness(1.2);
+.result-item.deleted:hover {
+    color: var(--deleted-clip-color);
+}
+
+.result-item.changed:hover {
+    color: var(--modified-clip-color);
 }
 
 .algorithm-tooltip {

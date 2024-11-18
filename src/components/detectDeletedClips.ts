@@ -1,64 +1,45 @@
 import { TOLERANCE } from '../constants'
 import { Clip } from '../types'
-import { findMatchingClip } from './detectFingerprint'
+import { findPositionalMatch } from './clipMatching'
 
-interface DeletedClip extends Clip {
-  isDeleted: true
-}
-
-/**
- * Detects clips that have been deleted from the revised project by comparing against the control project.
- * 
- * Detection Strategy:
- * 1. Examines each clip from the control project
- * 2. If a clip has no match in the revised project, it's a candidate for deletion
- * 3. Validates deletions by checking for at least one matching surrounding clip
- *    within a window of 2x the clip's length
- * 4. Returns deleted clips with their original properties plus isDeleted flag
- * 
- * Advantages over strict position-based detection:
- * - Handles multiple consecutive deletions
- * - Resilient to position shifts caused by other edits
- * - Works with deletions at sequence boundaries
- * - Doesn't require exact position matching
- * 
- * @param controlClips - Array of clips from the control (original) project
- * @param revisedClips - Array of clips from the revised project
- * @returns Array of deleted clips with isDeleted flag
- */
 export function detectDeletedClips(
   controlClips: Clip[],
   revisedClips: Clip[],
-): DeletedClip[] {
-  const deletedClips: DeletedClip[] = []
+): { deletedClips: Clip[], changedClips: Clip[] } {
+  const deletedClips: Clip[] = []
+  const changedClips: Clip[] = []
 
-  // Check each control clip to see if it exists in revised
   controlClips.forEach(controlClip => {
-    const matchInRevised = findMatchingClip(controlClip, revisedClips)
+    const match = findPositionalMatch(controlClip, revisedClips)
     
-    if (!matchInRevised) {
-      // Find the clips that should surround this one in revised
-      // Uses a window of 2x the clip length to account for position shifts
-      const surroundingControlClips = controlClips.filter(clip => 
-        Math.abs(clip.POSITION - controlClip.POSITION) < controlClip.LENGTH * 2
-      )
+    switch (match.type) {
+      case 'none':
+        // Only mark as deleted if surrounding clips exist
+        const surroundingControlClips = controlClips.filter(clip => 
+          Math.abs(clip.POSITION - controlClip.POSITION) < controlClip.LENGTH * 2
+        )
 
-      // Verify deletion by checking if surrounding clips still exist
-      const surroundingMatches = surroundingControlClips
-        .map(clip => findMatchingClip(clip, revisedClips))
-        .filter(Boolean)
+        const surroundingMatches = surroundingControlClips
+          .map(clip => findPositionalMatch(clip, revisedClips))
+          .filter(m => m.type !== 'none')
 
-      // If we find at least one surrounding clip match, this is a valid deletion
-      if (surroundingMatches.length >= 1) {
-        console.log('Found deleted clip:', controlClip)
-        deletedClips.push({
+        if (surroundingMatches.length >= 1) {
+          deletedClips.push(controlClip)
+        }
+        break
+
+      case 'changed':
+        changedClips.push({
           ...controlClip,
-          isDeleted: true as const
+          OFFSET: match.matchedClip!.OFFSET
         })
-      }
+        break
+
+      case 'exact':
+        // No change needed
+        break
     }
   })
 
-  console.log('All deleted clips:', deletedClips)
-  return deletedClips
+  return { deletedClips, changedClips }
 } 

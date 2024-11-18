@@ -2,8 +2,6 @@ export interface Clip {
   POSITION: number;
   LENGTH: number;
   OFFSET?: number;
-  NAME?: string;
-  IGUID?: string;
   isDeleted?: true
 }
 
@@ -13,7 +11,7 @@ export interface Change {
   controlPosition?: number;
   controlLength?: number;
   controlOffset?: number;
-  detectionMethod: 'overlap' | 'fingerprint' | 'position' | 'length' | 'addsdeletes';
+  detectionMethod: 'overlap' | 'fingerprint' | 'position' | 'length' | 'addsdeletes' | 'offset';
 }
 
 export interface ClipFingerprint {

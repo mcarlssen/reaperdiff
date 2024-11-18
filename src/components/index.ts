@@ -7,112 +7,70 @@ import { detectAddedClips } from './detectAddedClips';
 import { detectDeletedClips } from './detectDeletedClips';
 import { TOLERANCE } from '../constants'
 
+interface DetectionResult {
+  changedPositions: number[];
+  controlClips: Clip[];
+  revisedClips: Clip[];
+  changes: Change[];
+  overlappingClips: number[];
+}
+
 export async function detectChanges(
   controlFile: File | string,
   revisedFile: File | string,
   verbose: boolean,
   options: DetectionOptions
-): Promise<{
-  changedPositions: number[];
-  controlClips: Clip[];
-  revisedClips: Clip[];
-  changes: Change[];
-}> {
+): Promise<DetectionResult> {
   const controlClips = await parseRppFile(controlFile, verbose);
   let revisedClips = await parseRppFile(revisedFile, verbose);
-  const changes: Change[] = [];
+  const changes = new Map<number, Change>();
   
-  // Only run adds/deletes detection if enabled
+  // First detect deletions and offset changes
   if (options.detectAddsDeletes) {
-    const newClipPositions = detectAddedClips(controlClips, revisedClips);
-    const deletedClips = detectDeletedClips(controlClips, revisedClips);
+    const { deletedClips, changedClips } = detectDeletedClips(controlClips, revisedClips);
     
-    console.log('Deleted clips found:', deletedClips);
+    // Add deleted clips to revisedClips with isDeleted flag
+    revisedClips = [
+      ...revisedClips,
+      ...deletedClips.map(clip => ({ ...clip, isDeleted: true as const }))
+    ].sort((a, b) => a.POSITION - b.POSITION);
     
-    // Create full clips for deleted items
-    const deletedClipsWithMetadata = controlClips
-      .filter(clip => 
-        deletedClips.some(
-          deletedClip => Math.abs(deletedClip.POSITION - clip.POSITION) < TOLERANCE
-        )
-      )
-      .map(clip => ({
-        ...clip,
-        isDeleted: true as const
-      }));
-    
-    console.log('Deleted clips with metadata:', deletedClipsWithMetadata);
-    
-    // Add deleted clips to the revised clips array and sort by position
-    revisedClips = [...revisedClips, ...deletedClipsWithMetadata]
-      .sort((a, b) => a.POSITION - b.POSITION);
-    
-    // Add changes for new clips
-    newClipPositions.forEach(position => {
-      changes.push({
-        revisedPosition: position,
-        type: 'added',
-        detectionMethod: 'addsdeletes'
-      });
-    });
-    
-    // Add changes for deleted clips
+    // Record deletions and changes
     deletedClips.forEach(clip => {
-      changes.push({
+      changes.set(clip.POSITION, {
         revisedPosition: clip.POSITION,
         type: 'deleted',
         controlPosition: clip.POSITION,
         controlLength: clip.LENGTH,
         controlOffset: clip.OFFSET || 0,
-        detectionMethod: 'addsdeletes'
+        detectionMethod: 'position'
+      });
+    });
+
+    changedClips.forEach(clip => {
+      changes.set(clip.POSITION, {
+        revisedPosition: clip.POSITION,
+        type: 'changed',
+        controlPosition: clip.POSITION,
+        controlLength: clip.LENGTH,
+        controlOffset: clip.OFFSET || 0,
+        detectionMethod: 'offset'
       });
     });
   }
-  
-  let cumulativeShift = 0;
-  
-  // First pass: detect changed and deleted clips
-  controlClips.forEach(controlClip => {
-    const revisedClip = findMatchingClip(controlClip, revisedClips);
-    
-    if (!revisedClip) {
-      // Clip exists in control but not in revised -> deleted
-      changes.push({
-        revisedPosition: controlClip.POSITION,
-        type: 'deleted',
-        controlPosition: controlClip.POSITION,
-        controlLength: controlClip.LENGTH,
-        controlOffset: controlClip.OFFSET || 0,
-        detectionMethod: 'fingerprint'
-      });
-    } else if (
-      // Check fingerprints if enabled
-      (options.detectFingerprint && compareClips(controlClip, revisedClip, controlClips, revisedClips, controlClips.indexOf(controlClip))) ||
-      // Check positions if enabled
-      (options.detectPositions && controlClip.POSITION !== revisedClip.POSITION)
-    ) {
-      changes.push({
-        revisedPosition: revisedClip.POSITION,
-        type: 'changed',
-        controlPosition: controlClip.POSITION,
-        controlLength: controlClip.LENGTH,
-        controlOffset: controlClip.OFFSET || 0,
-        detectionMethod: options.detectFingerprint ? 'fingerprint' : 'position'
-      });
-      
-      // Only update cumulative shift if length detection is enabled
-      if (options.detectLengths && detectLengthChanges(controlClip, revisedClip)) {
-        cumulativeShift += (revisedClip.LENGTH - controlClip.LENGTH);
-      }
-    }
-  });
-  
-  // Second pass: detect added clips
+
+  // Then detect added clips
   revisedClips.forEach(revisedClip => {
+    // Skip if we already detected a change at this position
+    if (changes.has(revisedClip.POSITION)) return;
+    
+    // Skip deleted clips
+    if (revisedClip.isDeleted) return;
+
+    // Check if this clip exists in control
     const controlClip = findMatchingClip(revisedClip, controlClips);
     if (!controlClip) {
-      // Clip exists in revised but not in control -> added
-      changes.push({
+      changes.set(revisedClip.POSITION, {
         revisedPosition: revisedClip.POSITION,
         type: 'added',
         detectionMethod: 'fingerprint'
@@ -121,20 +79,17 @@ export async function detectChanges(
   });
 
   if (verbose) {
-    console.log('Detected changes:', {
-      changes,
-      cumulativeShift,
-      overlaps: options.detectOverlaps ? detectOverlaps(revisedClips) : []
-    });
+    console.log('Final changes:', Array.from(changes.values()));
   }
 
-  console.log('Revised clips after adding deleted:', revisedClips.filter(clip => clip.isDeleted));
+  const overlappingClips = detectOverlaps(revisedClips)
 
   return {
-    changedPositions: changes.map(change => change.revisedPosition),
+    changedPositions: Array.from(changes.values()).map(change => change.revisedPosition),
     controlClips,
     revisedClips,
-    changes
+    changes: Array.from(changes.values()),
+    overlappingClips
   };
 }
 

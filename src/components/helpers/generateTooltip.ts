@@ -12,7 +12,7 @@ interface TooltipData {
 
 function getTooltipData(clip: Clip, changes: Change[]): TooltipData {
   const change = changes.find(c => c.revisedPosition === clip.POSITION)
-  const status = change ? change.type : 'unchanged'
+  const status = change ? change.type : 'not modified'
   
   const tooltipData: TooltipData = {
     revisedPosition: clip.POSITION,

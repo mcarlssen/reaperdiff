@@ -11,14 +11,23 @@ interface TimelineProps {
   height: number;
   changes: Change[];
   hoveredPosition: number | null;
+  overlappingClips: number[];
 }
+
+const legendItems = [
+  { label: 'Added', class: 'added' },
+  { label: 'Deleted', class: 'deleted' },
+  { label: 'Modified', class: 'modified' },
+  { label: 'Unchanged', class: 'unchanged' }
+]
 
 export const Timeline: React.FC<TimelineProps> = ({
   revisedClips,
   width,
   height,
   changes,
-  hoveredPosition
+  hoveredPosition,
+  overlappingClips
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -66,11 +75,11 @@ export const Timeline: React.FC<TimelineProps> = ({
 
     // Updated color determination function
     const getClipColor = (clip: Clip): string => {
-        console.log('Processing clip color:', {
+        /* console.log('Processing clip color:', {
         clip,
             isDeleted: clip.isDeleted,
             matchingChange: changes.find(c => Math.abs(c.revisedPosition - clip.POSITION) < TOLERANCE)
-        });
+        }); */
 
         // Check for deleted clips first
       if (clip.isDeleted) return 'deleted'
@@ -85,12 +94,22 @@ export const Timeline: React.FC<TimelineProps> = ({
 
     // Draw clips in the center of the available space
     const clipHeight = 200; // Increased height for better visibility
-    const yOffset = (height - clipHeight) / 2.5; // Center vertically
+    const yOffset = ((height - clipHeight) / 2.5) + 20; // Add 20px padding by shifting clips down
 
     const clipSpacing = 1 // 1px spacing between clips
 
     const clipGroup = svg.append('g')
       .attr('class', 'clips-revised');
+
+    const getClipYOffset = (clip: Clip): number => {
+      const offset = overlappingClips?.includes(clip.POSITION) ? 20 : 0 // Increased offset for visibility
+      /* console.log('Clip offset calculation:', {
+        position: clip.POSITION,
+        isOverlapping: overlappingClips?.includes(clip.POSITION),
+        offset
+      }) */
+      return offset
+    }
 
     clipGroup.selectAll('rect')
       .data(revisedClips)
@@ -101,18 +120,54 @@ export const Timeline: React.FC<TimelineProps> = ({
         return `timeline-clip ${status}`
       })
       .attr('x', (d, i) => xScale(d.POSITION) + i * clipSpacing)
-      .attr('y', yOffset)
+      .attr('y', d => yOffset + getClipYOffset(d))
       .attr('width', d => xScale(d.POSITION + d.LENGTH) - xScale(d.POSITION) - clipSpacing)
       .attr('height', clipHeight)
       .append('title')
       .text(d => generateTooltip(d, changes))
 
+    // Add header group with label and legend
+    const headerGroup = svg.append('g')
+      .attr('class', 'timeline-header')
+      .attr('transform', `translate(0, ${yOffset - 35})`)
+
     // Add "Revised" label
-    svg.append('text')
+    headerGroup.append('text')
       .attr('class', 'timeline-label')
       .attr('x', 0)
-      .attr('y', yOffset - 20)
-      .text('Revised project timeline');
+      .text('Revised project timeline')
+
+    // Add legend group
+    const legend = headerGroup.append('g')
+      .attr('class', 'timeline-legend')
+      .attr('transform', `translate(${width - 320}, -18)`)
+
+    // Add legend border
+    legend.append('rect')
+      .attr('class', 'legend-border')
+      .attr('width', 310)
+      .attr('height', 30)
+      .attr('rx', 4)
+
+    // Add legend items
+    const legendItem = legend.selectAll('.legend-item')
+      .data(legendItems)
+      .enter()
+      .append('g')
+      .attr('class', 'legend-item')
+      .attr('transform', (d, i) => `translate(${10 + i * 70}, 7)`)
+
+    legendItem.append('rect')
+      .attr('class', d => `timeline-clip ${d.class}`)
+      .attr('width', 15)
+      .attr('height', 15)
+      .attr('rx', 2)
+
+    legendItem.append('text')
+      .attr('x', 20)
+      .attr('y', 12)
+      .attr('class', 'legend-text')
+      .text(d => d.label)
 
     // Add time axis
     const xAxis = d3.axisBottom(xScale)
@@ -121,7 +176,7 @@ export const Timeline: React.FC<TimelineProps> = ({
 
     svg.append('g')
       .attr('class', 'timeline-axis')
-      .attr('transform', `translate(0, ${height - 50})`)
+      .attr('transform', `translate(0, ${height - 10})`)
       .call(xAxis);
 
   }, [revisedClips, changes, width, height]);
