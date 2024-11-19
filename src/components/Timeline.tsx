@@ -94,7 +94,7 @@ export const Timeline: React.FC<TimelineProps> = ({
 
     // Draw clips in the center of the available space
     const clipHeight = 200; // Increased height for better visibility
-    const yOffset = ((height - clipHeight) / 2.5) + 20; // Add 20px padding by shifting clips down
+    const yOffset = ((height - clipHeight) / 2.5) + 10; // Add 20px padding by shifting clips down
 
     const clipSpacing = 1 // 1px spacing between clips
 
@@ -129,7 +129,7 @@ export const Timeline: React.FC<TimelineProps> = ({
     // Add header group with label and legend
     const headerGroup = svg.append('g')
       .attr('class', 'timeline-header')
-      .attr('transform', `translate(0, ${yOffset - 35})`)
+      .attr('transform', `translate(0, ${yOffset - 40})`) // controls both the label and legend
 
     // Add "Revised" label
     headerGroup.append('text')
@@ -140,7 +140,7 @@ export const Timeline: React.FC<TimelineProps> = ({
     // Add legend group
     const legend = headerGroup.append('g')
       .attr('class', 'timeline-legend')
-      .attr('transform', `translate(${width - 320}, -18)`)
+      .attr('transform', `translate(${width - 320}, -25)`) // controls the legend position
 
     // Add legend border
     legend.append('rect')
@@ -176,7 +176,7 @@ export const Timeline: React.FC<TimelineProps> = ({
 
     svg.append('g')
       .attr('class', 'timeline-axis')
-      .attr('transform', `translate(0, ${height - 10})`)
+      .attr('transform', `translate(0, ${height - 30})`)
       .call(xAxis);
 
   }, [revisedClips, changes, width, height]);
