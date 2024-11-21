@@ -28,6 +28,7 @@
     --deleted-clip-color: #bf4136;
     --modified-clip-color: #f5853f;
     --unchanged-clip-color: #086788;
+    --silence-clip-color: #2e2836aa;
 }
 
 /* Add these global styles */
@@ -283,6 +284,7 @@ body {
 }
 
 .results-container {
+  position: relative;
   margin-top: 40px;
   padding: 0px;
   border-top: 1px solid var(--border-color);
@@ -590,4 +592,38 @@ body {
   border: 1px solid var(--error-color);
   border-radius: 4px;
   margin: 16px 0;
+}
+
+.loader-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  justify-content: center;
+  align-items: center;
+  height: 360px;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.loader-container.fade-in {
+  opacity: 1;
+}
+
+.loader-container.fade-out {
+  opacity: 0;
+}
+
+.timeline-container {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.timeline-container.fade-in {
+  opacity: 1;
+}
+
+.timeline-container.fade-out {
+  opacity: 0;
 }

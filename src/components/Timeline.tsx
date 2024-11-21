@@ -18,7 +18,8 @@ const legendItems = [
   { label: 'Added', class: 'added' },
   { label: 'Deleted', class: 'deleted' },
   { label: 'Modified', class: 'modified' },
-  { label: 'Unchanged', class: 'unchanged' }
+  { label: 'Static', class: 'unchanged' },
+  { label: 'Silence', class: 'silence' }
 ]
 
 export const Timeline: React.FC<TimelineProps> = ({
@@ -75,17 +76,22 @@ export const Timeline: React.FC<TimelineProps> = ({
 
     // Updated color determination function
     const getClipColor = (clip: Clip): string => {
-        /* console.log('Processing clip color:', {
-        clip,
-            isDeleted: clip.isDeleted,
-            matchingChange: changes.find(c => Math.abs(c.revisedPosition - clip.POSITION) < TOLERANCE)
-        }); */
+      const change = changes.find(c => Math.abs(c.revisedPosition - clip.POSITION) < TOLERANCE)
+      /*
+      console.log('Processing clip color:', {
+        position: clip.POSITION,
+        change,
+        isSilence: change?.detectionMethod === 'silence'
+      })
+      */
 
         // Check for deleted clips first
       if (clip.isDeleted) return 'deleted'
       
-      const change = changes.find(c => Math.abs(c.revisedPosition - clip.POSITION) < TOLERANCE)
+      //const change = changes.find(c => Math.abs(c.revisedPosition - clip.POSITION) < TOLERANCE)
       if (!change) return 'unchanged'
+      
+      if (change.detectionMethod === 'silence') return 'silence'
       
       return change.type === 'added' ? 'added' : 
              change.type === 'changed' ? 'modified' : 
@@ -97,6 +103,9 @@ export const Timeline: React.FC<TimelineProps> = ({
     const yOffset = ((height - clipHeight) / 2.5) + 10; // Add 20px padding by shifting clips down
 
     const clipSpacing = 1 // 1px spacing between clips
+
+    // Before creating the clipGroup, sort the clips
+    const sortedClips = [...revisedClips]
 
     const clipGroup = svg.append('g')
       .attr('class', 'clips-revised');
@@ -112,12 +121,13 @@ export const Timeline: React.FC<TimelineProps> = ({
     }
 
     clipGroup.selectAll('rect')
-      .data(revisedClips)
+      .data(sortedClips)
       .enter()
       .append('rect')
       .attr('class', d => {
         const status = getClipColor(d)
-        return `timeline-clip ${status}`
+        const isOffset = overlappingClips?.includes(d.POSITION)
+        return `timeline-clip ${status}${isOffset ? ' offset' : ''}`
       })
       .attr('x', (d, i) => xScale(d.POSITION) + i * clipSpacing)
       .attr('y', d => yOffset + getClipYOffset(d))
@@ -140,12 +150,12 @@ export const Timeline: React.FC<TimelineProps> = ({
     // Add legend group
     const legend = headerGroup.append('g')
       .attr('class', 'timeline-legend')
-      .attr('transform', `translate(${width - 320}, -25)`) // controls the legend position
+      .attr('transform', `translate(${width - 360}, -25)`) // controls the legend position
 
     // Add legend border
     legend.append('rect')
       .attr('class', 'legend-border')
-      .attr('width', 310)
+      .attr('width', 360)
       .attr('height', 30)
       .attr('rx', 4)
 

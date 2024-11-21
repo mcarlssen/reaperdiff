@@ -1,0 +1,1 @@
+- allow users to set their own colors for clips (and be persistent, w/ browser storage)

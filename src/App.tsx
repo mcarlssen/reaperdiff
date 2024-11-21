@@ -8,6 +8,9 @@ import { detectChanges } from './components';
 import { Clip, Change } from './types';
 import { generateAlgorithmTooltip } from './components/helpers/generateAlgorithmTooltip';
 import { testDatasets, getDatasetById } from './testData/index';
+import { chaoticOrbit } from 'ldrs'
+
+chaoticOrbit.register()
 
 export default function App() {
   const [verbose, setVerbose] = useState<boolean>(true);
@@ -35,6 +38,8 @@ export default function App() {
   const [selectedDatasetId, setSelectedDatasetId] = useState<string>('')
   const [datasetError, setDatasetError] = useState<string | null>(null)
   const [overlappingClips, setOverlappingClips] = useState<number[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [showTimeline, setShowTimeline] = useState(false)
 
   useEffect(() => {
     if (resultsContainerRef.current) {
@@ -68,9 +73,15 @@ export default function App() {
     }
   }, [controlFile]);
 
+  const calculateLoadingDuration = (clips: Clip[]): number => {
+    if (!clips.length) return 0
+    const maxPosition = Math.max(...clips.map(clip => clip.POSITION + clip.LENGTH))
+    return ((maxPosition / 60) * 250)+2000 // 250ms per 60 units + 2 seconds
+  }
+
   const compareFiles = async () => {
-    let controlInput: File | string | null = controlFile;
-    let revisedInput: File | string | null = revisedFile;
+    let controlInput: File | string | null = controlFile
+    let revisedInput: File | string | null = revisedFile
 
     if (testMode) {
       const dataset = getDatasetById(selectedDatasetId)
@@ -83,11 +94,15 @@ export default function App() {
     }
 
     if (!controlInput || !revisedInput) {
-      alert('Please select both files first');
-      return;
+      alert('Please select both files first')
+      return
     }
 
     try {
+      // Start loading state
+      setIsLoading(true)
+      setShowTimeline(false)
+
       const { 
         changedPositions, 
         controlClips, 
@@ -105,18 +120,35 @@ export default function App() {
           detectFingerprint: detectFingerprintEnabled,
           detectAddsDeletes: detectAddsDeletesEnabled
         }
-      );
+      )
       
-      setControlClips(controlClips);
-      setRevisedClips(revisedClips);
-      setResults(changedPositions);
-      setChanges(changes);
-      setOverlappingClips(overlappingClips);
-      setIsCompared(true);
+      // Calculate and apply loading duration
+      const loadingDuration = calculateLoadingDuration(revisedClips)
+      const minimumDuration = 2000 // 2 seconds minimum
+      const totalDuration = Math.max(loadingDuration, minimumDuration)
+      
+      // Set the state
+      setControlClips(controlClips)
+      setRevisedClips(revisedClips)
+      setResults(changedPositions)
+      setChanges(changes)
+      setOverlappingClips(overlappingClips)
+      setIsCompared(true)
+
+      // First, start the fade out of the loader
+      setTimeout(() => {
+        setIsLoading(false)
+        // Wait for loader fade out animation to complete before showing timeline
+        setTimeout(() => {
+          setShowTimeline(true)
+        }, 300) // Match transition duration
+      }, totalDuration)
+
     } catch (error) {
-      console.error("Error detecting changes:", error);
+      console.error("Error detecting changes:", error)
+      setIsLoading(false)
     }
-  };
+  }
 
   const clearAll = () => {
     setControlFile(null);
@@ -404,18 +436,28 @@ export default function App() {
 
             {results !== null && (
                 <div className="results-container" ref={resultsContainerRef}>
-                    <>
+                    <div className={`loader-container ${isLoading ? 'fade-in' : 'fade-out'}`}
+                         style={{ display: !showTimeline ? 'flex' : 'none' }}>
+                        <l-chaotic-orbit
+                            size="85"
+                            speed="2" 
+                            color="var(--text-accent-color)"
+                        ></l-chaotic-orbit>
+                    </div>
+                    
+                    <div className={`timeline-container ${showTimeline ? 'fade-in' : 'fade-out'}`}
+                         style={{ display: showTimeline ? 'block' : 'none' }}>
                         {controlClips.length > 0 && revisedClips.length > 0 && containerWidth ? (
-                          <Timeline 
-                            revisedClips={revisedClips}
-                            width={containerWidth}
-                            height={360}
-                            changes={changes}
-                            hoveredPosition={hoveredPosition}
-                            overlappingClips={overlappingClips}
-                          />
+                            <Timeline 
+                                revisedClips={revisedClips}
+                                width={containerWidth}
+                                height={360}
+                                changes={changes}
+                                hoveredPosition={hoveredPosition}
+                                overlappingClips={overlappingClips}
+                            />
                         ) : (
-                          <p>Loading timeline...</p>
+                            <p>Loading timeline...</p>
                         )}
                         {results.length > 0 ? (
                             <div className="results-list">
@@ -463,7 +505,7 @@ export default function App() {
                         ) : (
                             <p>No changes detected!</p>
                         )}
-                    </>
+                    </div>
                 </div>
             )}
             </div>

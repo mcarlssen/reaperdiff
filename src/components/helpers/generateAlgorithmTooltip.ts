@@ -41,6 +41,15 @@ const algorithmDescriptions: Record<string, AlgorithmDescription> = {
       '• Verifying surrounding clips match in both files',
       '• Confirming position shifts match clip length'
     ]
+  },
+  moved: {
+    name: 'Moved Clip Detection',
+    criteria: [
+      'Identifies clips that have:',
+      '• Same length and offset',
+      '• Different position on timeline',
+      '• May create silent gaps at original position'
+    ]
   }
 }
 

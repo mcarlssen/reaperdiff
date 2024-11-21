@@ -5,6 +5,7 @@ import { detectOverlaps } from './detectOverlaps';
 import { detectLengthChanges } from './detectLengthChanges';
 import { detectAddedClips } from './detectAddedClips';
 import { detectDeletedClips } from './detectDeletedClips';
+import { detectMovedClips } from './detectMovedClips';
 import { TOLERANCE } from '../constants'
 
 interface DetectionResult {
@@ -25,37 +26,46 @@ export async function detectChanges(
   let revisedClips = await parseRppFile(revisedFile, verbose);
   const changes = new Map<number, Change>();
   
-  // First detect deletions and offset changes
+  // First detect moved clips
+  const { movedClips, silentGaps } = detectMovedClips(controlClips, revisedClips);
+  
+  // Add moved clips and silent gaps to changes
+  movedClips.forEach((change, position) => changes.set(position, change));
+  silentGaps.forEach((change, position) => changes.set(position, change));
+
+  // Then detect remaining deletions and offset changes
   if (options.detectAddsDeletes) {
-    const { deletedClips, changedClips } = detectDeletedClips(controlClips, revisedClips);
+    const { deletedClips, changedClips } = detectDeletedClips(
+      controlClips.filter(clip => 
+        !Array.from(movedClips.values())
+          .some(change => change.controlPosition === clip.POSITION)
+      ),
+      revisedClips
+    );
     
-    // Add deleted clips to revisedClips with isDeleted flag
-    revisedClips = [
-      ...revisedClips,
-      ...deletedClips.map(clip => ({ ...clip, isDeleted: true as const }))
-    ].sort((a, b) => a.POSITION - b.POSITION);
-    
-    // Record deletions and changes
+    // Add remaining changes
     deletedClips.forEach(clip => {
-      changes.set(clip.POSITION, {
-        revisedPosition: clip.POSITION,
-        type: 'deleted',
-        controlPosition: clip.POSITION,
-        controlLength: clip.LENGTH,
-        controlOffset: clip.OFFSET || 0,
-        detectionMethod: 'position'
-      });
+      if (!changes.has(clip.POSITION))
+        changes.set(clip.POSITION, {
+          revisedPosition: clip.POSITION,
+          type: 'deleted',
+          controlPosition: clip.POSITION,
+          controlLength: clip.LENGTH,
+          controlOffset: clip.OFFSET || 0,
+          detectionMethod: 'position'
+        });
     });
 
     changedClips.forEach(clip => {
-      changes.set(clip.POSITION, {
-        revisedPosition: clip.POSITION,
-        type: 'changed',
-        controlPosition: clip.POSITION,
-        controlLength: clip.LENGTH,
-        controlOffset: clip.OFFSET || 0,
-        detectionMethod: 'offset'
-      });
+      if (!changes.has(clip.POSITION))
+        changes.set(clip.POSITION, {
+          revisedPosition: clip.POSITION,
+          type: 'changed',
+          controlPosition: clip.POSITION,
+          controlLength: clip.LENGTH,
+          controlOffset: clip.OFFSET || 0,
+          detectionMethod: 'offset'
+        });
     });
   }
 
@@ -100,4 +110,5 @@ export { detectOverlaps } from './detectOverlaps';
 export { detectLengthChanges } from './detectLengthChanges';
 export { detectAddedClips } from './detectAddedClips';
 export { detectDeletedClips } from './detectDeletedClips';
+export { detectMovedClips } from './detectMovedClips';
   

@@ -31,6 +31,7 @@ export function detectOverlaps(clips: Clip[]): number[] {
     // Use TOLERANCE for overlap detection
     if (currentEnd - nextClip.POSITION > TOLERANCE) {
       overlapPositions.push(nextClip.POSITION)
+      /*
       console.log('Overlap found:', {
         clip1: {
           position: currentClip.POSITION,
@@ -43,9 +44,12 @@ export function detectOverlaps(clips: Clip[]): number[] {
         },
         overlap: currentEnd - nextClip.POSITION
       })
+      */
     }
   }
   
+  /*    
   console.log('Final overlap positions:', overlapPositions)
+  */
   return overlapPositions
 } 
