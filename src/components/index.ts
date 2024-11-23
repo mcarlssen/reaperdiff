@@ -6,7 +6,7 @@ import { detectLengthChanges } from './detectLengthChanges';
 import { detectAddedClips } from './detectAddedClips';
 import { detectDeletedClips } from './detectDeletedClips';
 import { detectMovedClips } from './detectMovedClips';
-import { TOLERANCE } from '../constants'
+import { ignoreMute, TOLERANCE } from '../constants'
 
 interface DetectionResult {
   changedPositions: number[];
@@ -22,8 +22,15 @@ export async function detectChanges(
   verbose: boolean,
   options: DetectionOptions
 ): Promise<DetectionResult> {
-  const controlClips = await parseRppFile(controlFile, verbose);
-  let revisedClips = await parseRppFile(revisedFile, verbose);
+  let controlClips = await parseRppFile(controlFile, verbose)
+  let revisedClips = await parseRppFile(revisedFile, verbose)
+
+  // Filter out muted clips if ignoreMute is enabled
+  if (ignoreMute) {
+    controlClips = controlClips.filter(clip => !clip.MUTE)
+    revisedClips = revisedClips.filter(clip => !clip.MUTE)
+  }
+
   const changes = new Map<number, Change>();
   
   // First detect moved clips

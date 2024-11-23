@@ -2,7 +2,10 @@ export interface Clip {
   POSITION: number;
   LENGTH: number;
   OFFSET?: number;
-  isDeleted?: true
+  isDeleted?: boolean;
+  MUTE?: boolean;
+  NAME?: string;
+  IGUID?: string;
 }
 
 export interface Change {

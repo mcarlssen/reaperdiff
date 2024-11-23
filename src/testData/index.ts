@@ -1,6 +1,7 @@
 import { TestDataset } from '../types'
 import { addDeleteDataset } from './datasets/add-delete'
 import { slippedClipsDataset } from './datasets/slipped-clips'
+import { doubleTrackDataset } from './datasets/double-track'
 // Import other datasets here as they are added
 // import { comboDataset } from './datasets/combo'
 // import { comboDataset } from './datasets/combo'
@@ -21,7 +22,8 @@ function isValidDataset(dataset: unknown): dataset is TestDataset {
 // Collect all datasets
 export const testDatasets: TestDataset[] = [
   addDeleteDataset,
-  slippedClipsDataset
+  slippedClipsDataset,
+  doubleTrackDataset
   // Add other datasets here as they are imported
 ].filter(isValidDataset)
 
