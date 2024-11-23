@@ -1,6 +1,5 @@
 import { Clip, ClipFingerprint } from '../types';
-
-const TOLERANCE = 0.005; // 5 millisecond tolerance for position and length comparisons
+import { TOLERANCE } from '../constants'
 
 // Calculate decimal places based on TOLERANCE
 const DECIMAL_PLACES = Math.abs(Math.floor(Math.log10(TOLERANCE)));

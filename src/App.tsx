@@ -9,6 +9,7 @@ import { Clip, Change } from './types';
 import { generateAlgorithmTooltip } from './components/helpers/generateAlgorithmTooltip';
 import { testDatasets, getDatasetById } from './testData/index';
 import { chaoticOrbit } from 'ldrs'
+import { calculateTotalDuration, formatDuration } from './utils/duration'
 
 chaoticOrbit.register()
 
@@ -40,6 +41,8 @@ export default function App() {
   const [overlappingClips, setOverlappingClips] = useState<number[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [showTimeline, setShowTimeline] = useState(false)
+  const [isScrollable, setIsScrollable] = useState(true)
+  const [isFullWidth, setIsFullWidth] = useState(false)
 
   useEffect(() => {
     if (resultsContainerRef.current) {
@@ -219,7 +222,7 @@ export default function App() {
   }, [testMode]);
 
     return (
-    <div className="app-container">
+    <div className={`app-container ${isFullWidth ? 'full-width' : ''}`}>
         <div className="top-banner">
             <div className="banner-left">
                 <div className="app-title">
@@ -254,6 +257,18 @@ export default function App() {
                             />
                         }
                         label="Test Mode"
+                    />
+                </div>
+                <div className="switch-container">
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={isFullWidth}
+                                onChange={(e) => setIsFullWidth(e.target.checked)}
+                                color="primary"
+                            />
+                        }
+                        label="Full Width"
                     />
                 </div>
             </div>
@@ -354,70 +369,7 @@ export default function App() {
             ) : null}
 
             <div className="button-container">
-                <div className="detection-options">
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                checked={detectOverlapsEnabled}
-                                onChange={(e) => setDetectOverlapsEnabled(e.target.checked)}
-                                color="primary"
-                            />
-                        }
-                        label="Source Media Change"
-                    />
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                checked={detectLengthsEnabled}
-                                onChange={(e) => setDetectLengthsEnabled(e.target.checked)}
-                                color="primary"
-                            />
-                        }
-                        label="Lengths"
-                    />
-                    <Tooltip 
-                        title={<div className="algorithm-tooltip">{generateAlgorithmTooltip('fingerprint')}</div>}
-                        placement="top"
-                        enterDelay={500}
-                    >
-                        <FormControlLabel
-                            control={
-                                <Switch
-                                    checked={detectFingerprintEnabled}
-                                    onChange={(e) => setDetectFingerprintEnabled(e.target.checked)}
-                                    color="primary"
-                                />
-                            }
-                            label="Fingerprints"
-                        />
-                    </Tooltip>
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                checked={detectPositionsEnabled}
-                                onChange={(e) => setDetectPositionsEnabled(e.target.checked)}
-                                color="primary"
-                            />
-                        }
-                        label="Positions"
-                    />
-                    <Tooltip 
-                        title={<div className="algorithm-tooltip">{generateAlgorithmTooltip('addsdeletes')}</div>}
-                        placement="top"
-                        enterDelay={500}
-                    >
-                        <FormControlLabel
-                            control={
-                                <Switch
-                                    checked={detectAddsDeletesEnabled}
-                                    onChange={(e) => setDetectAddsDeletesEnabled(e.target.checked)}
-                                    color="primary"
-                                />
-                            }
-                            label="Adds/Deletes"
-                        />
-                    </Tooltip>
-                </div>
+
                 <div className="compare-button-container">
                     <button 
                         onClick={isCompared ? clearAll : compareFiles}
@@ -460,48 +412,95 @@ export default function App() {
                             <p>Loading timeline...</p>
                         )}
                         {results.length > 0 ? (
-                            <div className="results-list">
-                                <p>Found {changes.length} change{changes.length !== 1 ? 's' : ''}:</p>
-                                <ul>
-                                    {changes
-                                        .sort((a, b) => a.revisedPosition - b.revisedPosition)
-                                        .map((change, index) => {
-                                            const changeDescription = (() => {
-                                                const position = change.revisedPosition.toFixed(2)
-                                                const method = change.detectionMethod.charAt(0).toUpperCase() + 
-                                                      change.detectionMethod.slice(1)
-                                                
-                                                switch (change.type) {
-                                                    case 'added':
-                                                        return `Added clip at ${position} (${method})`
-                                                    case 'deleted':
-                                                        return `Deleted clip at ${position} (${method})`
-                                                    case 'changed':
-                                                        if (change.detectionMethod === 'fingerprint')
-                                                            return `Clip moved to ${position} (${method})`
-                                                        if (change.detectionMethod === 'position')
-                                                            return `Clip position changed to ${position} (${method})`
-                                                        if (change.detectionMethod === 'length')
-                                                            return `Clip length changed at ${position} (${method})`
-                                                        return `Modified clip at ${position} (${method})`
-                                                    default:
-                                                        return `Unknown change at ${position} (${method})`
-                                                }
-                                            })()
-
+                            <>
+                                <div className="results-list-header">
+                                    <p>Found {changes.length} change{changes.length !== 1 ? 's' : ''}:</p>
+                                    {changes.length > 10 && (
+                                        <FormControlLabel
+                                            control={
+                                                <Switch
+                                                    checked={isScrollable}
+                                                    onChange={(e) => setIsScrollable(e.target.checked)}
+                                                    size="small"
+                                                    color="default"
+                                                />
+                                            }
+                                            label="Scrollable list"
+                                        />
+                                    )}
+                                </div>
+                                <div className="results-content-wrapper">
+                                    <div className="results-stats">
+                                        {(() => {
+                                            const controlDuration = calculateTotalDuration(controlClips)
+                                            const revisedDuration = calculateTotalDuration(revisedClips)
+                                            const durationChange = revisedDuration - controlDuration
+                                            const percentageChange = ((revisedDuration - controlDuration) / controlDuration * 100).toFixed(1)
+                                            const isPositive = durationChange >= 0
+                                            
                                             return (
-                                                <li 
-                                                    key={index}
-                                                    onMouseEnter={() => setHoveredPosition(change.revisedPosition)}
-                                                    onMouseLeave={() => setHoveredPosition(null)}
-                                                    className={`result-item ${change.type}`}
-                                                >
-                                                    {changeDescription}
-                                                </li>
+                                                <div className="duration-change">
+                                                    <h4>Duration</h4>
+                                                    <p className={`duration-value ${isPositive ? 'positive' : 'negative'}`}>
+                                                        {isPositive ? '+' : '-'}{formatDuration(durationChange)}
+                                                        <span className="percentage">
+                                                            ({isPositive ? '+' : ''}{percentageChange}%)
+                                                        </span>
+                                                    </p>
+                                                </div>
                                             )
-                                        })}
-                                </ul>
-                            </div>
+                                        })()}
+                                        <p>Total Changes: {changes.length}</p>
+                                        <p>Added Clips: {changes.filter(c => c.type === 'added').length}</p>
+                                        <p>Deleted Clips: {changes.filter(c => c.type === 'deleted').length}</p>
+                                        <p>Modified Clips: {changes.filter(c => c.type === 'changed').length}</p>
+
+                                    </div>
+                                    <div className="results-list">
+                                        <div className={`results-list-content ${isScrollable && changes.length > 10 ? 'scrollable' : ''}`}>
+                                            <ul>
+                                                {changes
+                                                    .sort((a, b) => a.revisedPosition - b.revisedPosition)
+                                                    .map((change, index) => {
+                                                        const changeDescription = (() => {
+                                                            const position = change.revisedPosition.toFixed(2)
+                                                            const method = change.detectionMethod.charAt(0).toUpperCase() + 
+                                                                change.detectionMethod.slice(1)
+                                                            
+                                                            switch (change.type) {
+                                                                case 'added':
+                                                                    return `Added clip at ${position} (${method})`
+                                                                case 'deleted':
+                                                                    return `Deleted clip at ${position} (${method})`
+                                                                case 'changed':
+                                                                    if (change.detectionMethod === 'fingerprint')
+                                                                        return `Clip moved to ${position} (${method})`
+                                                                    if (change.detectionMethod === 'position')
+                                                                        return `Clip position changed to ${position} (${method})`
+                                                                    if (change.detectionMethod === 'length')
+                                                                        return `Clip length changed at ${position} (${method})`
+                                                                    return `Modified clip at ${position} (${method})`
+                                                                default:
+                                                                    return `Unknown change at ${position} (${method})`
+                                                            }
+                                                        })()
+
+                                                        return (
+                                                            <li 
+                                                                key={index}
+                                                                onMouseEnter={() => setHoveredPosition(change.revisedPosition)}
+                                                                onMouseLeave={() => setHoveredPosition(null)}
+                                                                className={`result-item ${change.type}`}
+                                                            >
+                                                                {changeDescription}
+                                                            </li>
+                                                        )
+                                                    })}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
                         ) : (
                             <p>No changes detected!</p>
                         )}

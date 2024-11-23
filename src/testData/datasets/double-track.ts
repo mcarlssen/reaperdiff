@@ -1,7 +1,11 @@
 import { TestDataset } from '../../types'
 
 const controlRPP = String.raw`<REAPER_PROJECT ...>
-   <ITEM
+  <TRACK {843A0C6F-77E6-4BC7-A79A-0293B19FAA0B}
+    NAME 06_CH03_SUNUS_VISION_MONO_RT_EDIT1
+    PEAKCOL 16576
+    MUTESOLO 0 0 0
+    <ITEM
       POSITION 0
       LENGTH 724.2665
       MUTE 0 0
@@ -11,43 +15,10 @@ const controlRPP = String.raw`<REAPER_PROJECT ...>
         FILE "06_CH03_SUNUS_VISION_MONO_RT_EDIT1.wav"
       >
     >
+  >
   </REAPER_PROJECT>`;
 
   const revisedRPP = String.raw`<REAPER_PROJECT ...>
-     <ITEM
-      POSITION 0
-      LENGTH 199.35302512976446
-      MUTE 0 0
-      NAME 01-241021_2036.wav
-      SOFFS 0
-      <SOURCE WAVE
-        FILE "01-241021_2036.wav"
-      >
-    >
-    <ITEM
-      POSITION 199.3175024952082
-      SNAPOFFS 0
-      LENGTH 762.94818722711193
-      LOOP 1
-      ALLTAKES 0
-      FADEIN 1.1 0.01 0.03552263455626 1 1 0 0
-      FADEOUT 1 0.01 0 1 0 0 0
-      MUTE 0 0
-      SEL 0
-      IGUID {B8E8FD0F-8221-4AA6-9AC7-32144E49F4CC}
-      IID 1
-      NAME 01-241021_2036.wav
-      VOLPAN 1 0 1 -1
-      SOFFS 198.86281277288799
-      PLAYRATE 1 1 0 -1 0 0.0025
-      CHANMODE 0
-      GUID {A63ADEB6-D548-4A6B-B059-20D6B8F40FC3}
-      RECPASS 1
-      <SOURCE WAVE
-        FILE "01-241021_2036.wav"
-      >
-    >
-  >
   <TRACK {A5F8E2DE-F9D0-4018-923C-E167C9472010}
     NAME 06_CH03_SUNUS_VISION_MONO_RT_EDIT1
     PEAKCOL 16576
@@ -55,13 +26,13 @@ const controlRPP = String.raw`<REAPER_PROJECT ...>
     AUTOMODE 0
     PANLAWFLAGS 3
     VOLPAN 1 0 -1 -1 1
-    MUTESOLO 0 0 0
+    MUTESOLO 1 0 0
     IPHASE 0
     PLAYOFFS 0 1
     ISBUS 0 0
     BUSCOMP 0 0 0 0 0
     SHOWINMIX 1 0.6667 0.5 1 0.5 0 0 0
-    FIXEDLANES 9 0 0 0 0
+    FIXEDLANES 9 0 0 0
     SEL 0
     REC 0 0 0 0 0 0 0 0
     VU 2
@@ -867,7 +838,7 @@ const controlRPP = String.raw`<REAPER_PROJECT ...>
     >
   >
   <TRACK {AFD7F904-20D7-4070-938B-D5DA876CD2A3}
-    NAME ""
+    NAME "Rev 02"
     PEAKCOL 16576
     BEAT -1
     AUTOMODE 0
@@ -879,9 +850,9 @@ const controlRPP = String.raw`<REAPER_PROJECT ...>
     ISBUS 0 0
     BUSCOMP 0 0 0 0 0
     SHOWINMIX 1 0.6667 0.5 1 0.5 0 0 0
-    FIXEDLANES 9 0 0 0 0
-    SEL 1
-    REC 1 0 0 0 0 0 0 0
+    FIXEDLANES 9 0 0 0
+    SEL 0
+    REC 0 0 0 0 0 0 0 0
     VU 2
     TRACKHEIGHT 302 0 0 0 0 0 0
     INQ 0 0 0 0.5 100 0 0 100
@@ -892,7 +863,7 @@ const controlRPP = String.raw`<REAPER_PROJECT ...>
     MIDIOUT -1
     MAINSEND 1 0
     <ITEM
-      POSITION 443.91455208320616
+      POSITION 442.96172902858513
       SNAPOFFS 0
       LENGTH 2.49544791679102
       LOOP 1
@@ -915,7 +886,7 @@ const controlRPP = String.raw`<REAPER_PROJECT ...>
       >
     >
     <ITEM
-      POSITION 446.40999999999718
+      POSITION 445.45717694537615
       SNAPOFFS 0
       LENGTH 2.80333471314691
       LOOP 1
@@ -938,7 +909,7 @@ const controlRPP = String.raw`<REAPER_PROJECT ...>
       >
     >
     <ITEM
-      POSITION 474.08297043372579
+      POSITION 473.13014737910476
       SNAPOFFS 0
       LENGTH 2.25454687170713
       LOOP 1
@@ -961,7 +932,7 @@ const controlRPP = String.raw`<REAPER_PROJECT ...>
       >
     >
     <ITEM
-      POSITION 476.51645252156953
+      POSITION 475.5636294669485
       SNAPOFFS 0
       LENGTH 2.42032796063279
       LOOP 1
@@ -984,7 +955,7 @@ const controlRPP = String.raw`<REAPER_PROJECT ...>
       >
     >
     <ITEM
-      POSITION 495.24264890951048
+      POSITION 494.28982585488944
       SNAPOFFS 0
       LENGTH 0.15301669175528
       LOOP 1
@@ -1007,7 +978,7 @@ const controlRPP = String.raw`<REAPER_PROJECT ...>
       >
     >
     <ITEM
-      POSITION 495.39566560126576
+      POSITION 494.44284254664473
       SNAPOFFS 0
       LENGTH 3.29289950112241
       LOOP 1
@@ -1030,15 +1001,15 @@ const controlRPP = String.raw`<REAPER_PROJECT ...>
       >
     >
     <ITEM
-      POSITION 655.84815025111561
+      POSITION 654.89532719649458
       SNAPOFFS 0
-      LENGTH 3.09807725430915
+      LENGTH 3.09807725430926
       LOOP 1
       ALLTAKES 0
       FADEIN 1 0.01 0 1 0 0 0
       FADEOUT 1 0.01 0 1 0 0 0
       MUTE 1 0
-      SEL 1
+      SEL 0
       IGUID {D78C2070-AB32-40A3-975E-3ED9B538B4F8}
       IID 46
       NAME 03-241119_2051.wav
@@ -1053,7 +1024,7 @@ const controlRPP = String.raw`<REAPER_PROJECT ...>
       >
     >
     <ITEM
-      POSITION 658.94622750542476
+      POSITION 657.99340445080384
       SNAPOFFS 0
       LENGTH 0.81623646570586
       LOOP 1
@@ -1076,7 +1047,7 @@ const controlRPP = String.raw`<REAPER_PROJECT ...>
       >
     >
     <ITEM
-      POSITION 659.76246397113061
+      POSITION 658.80964091650958
       SNAPOFFS 0
       LENGTH 1.37401961331841
       LOOP 1
@@ -1098,6 +1069,7 @@ const controlRPP = String.raw`<REAPER_PROJECT ...>
         FILE "03-241119_2051.wav"
       >
     >
+  >
   </REAPER_PROJECT>`
 
   export const doubleTrackDataset: TestDataset = {

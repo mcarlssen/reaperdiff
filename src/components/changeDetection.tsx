@@ -1,3 +1,5 @@
+import { TOLERANCE } from '../constants'
+
 interface Clip {
   POSITION: number;
   LENGTH: number;
@@ -54,7 +56,7 @@ function compareClips(
   revisedClip: Clip, 
   cumulativeShift: number,
 ): boolean {
-  const TOLERANCE = 0.001; // 1 millisecond tolerance
+  //const TOLERANCE = 0.001; // 1 millisecond tolerance
   const expectedPosition = controlClip.POSITION + cumulativeShift;
   const positionDiff = Math.abs(revisedClip.POSITION - expectedPosition);
   const lengthDiff = Math.abs(revisedClip.LENGTH - controlClip.LENGTH);

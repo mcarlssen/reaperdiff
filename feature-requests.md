@@ -1,5 +1,4 @@
 - allow users to set their own colors for clips (and be persistent, w/ browser storage)
-- expanded view mode where the timeline can expand to the full width of the browser window
 - automated testing against new feature changes
-- ignore muted clips
-- make sure that the TOLERANCE global variable is used consistently throughout the codebase
+- detect source media changes (e.g. different audio files)
+- is there a way to detect and mark portions of now-split clips, which were present in the original, as unchanged?

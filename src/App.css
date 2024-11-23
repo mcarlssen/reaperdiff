@@ -46,12 +46,17 @@ body {
 
 .app-container {
     display: grid;
-    grid-template-rows: 80px 1fr 40px;
+    grid-template-rows: 100px 1fr 40px;
     min-height: 880px;
-    max-width: 1200px;
+    width: min(1200px, calc(100% - 40px));
     margin: 0 auto;
     background-color: var(--primary-bg);
     overflow: hidden;
+    transition: width 0.5s ease-in-out;
+}
+
+.app-container.full-width {
+    width: calc(100% - 40px);
 }
 
 .app-title {
@@ -64,9 +69,9 @@ body {
 
 .top-banner {
     display: grid;
-    grid-template-columns: 80% 18.25%;
+    grid-template-columns: 84% 14.25%;
     gap: 20px;
-    align-items: center;
+    align-items: start;
     padding: 0;
     border-radius: 15px;
     width: calc(100% - 40px);
@@ -102,7 +107,7 @@ body {
 
 .main-content {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: 1fr;
     padding: 20px;
     overflow: hidden;
@@ -114,9 +119,8 @@ body {
     background-color: var(--secondary-bg);
     border-radius: 15px;
     padding: 20px;
-    overflow-y: auto;
     min-height: 100%;
-    box-sizing: border-box;
+    overflow: hidden;
 }
 
 /* drop zone styles */
@@ -128,6 +132,9 @@ body {
   margin-top: 20px;
   opacity: 0;
   animation: fadeIn 0.2s ease-in-out forwards;
+  width: 100%;
+  max-width: 100%;
+  transition: width 0.5s ease-out;
 }
 
 @keyframes fadeIn {
@@ -253,13 +260,15 @@ body {
   background-color: #cc9900;  /* Darker yellow */
 }
 
-.banner-right .MuiFormControlLabel-root {
+.MuiFormControlLabel-root {
+    gap:10px;
     margin: 0;
+}
+.banner-right .MuiFormControlLabel-root {
     color: var(--text-color);
     text-transform: uppercase;
     font-weight: bold;
     padding-left:5px;
-    gap:10px;
 }
 
 .banner-right .MuiSwitch-root {
@@ -291,18 +300,61 @@ body {
   border-radius: 8px;
   width: 100%;
   box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  transition: width 0.5s ease-out;
 }
 
 .results-list {
+  padding: 0 10px;
+}
+
+.results-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
   margin-top: 10px;
-  background-color: var(--secondary-bg);
-  border-radius: 8px;
-  padding: 20px;
+  text-transform: uppercase;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.results-list-content {
+  transition: max-height 0.3s ease-out;
+  padding-right: 10px;
+}
+
+.results-list-content.scrollable {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.results-list-content.scrollable:hover {
+  border-color: var(--border-color);
+}
+
+/* Custom scrollbar styling */
+.results-list-content.scrollable::-webkit-scrollbar {
+  width: 8px;
+}
+
+.results-list-content.scrollable::-webkit-scrollbar-track {
+  background: var(--secondary-bg);
+  border-radius: 4px;
+}
+
+.results-list-content.scrollable::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.results-list-content.scrollable::-webkit-scrollbar-thumb:hover {
+  background: var(--border-color-light);
 }
 
 .results-list ul {
   list-style: none;
-  margin-top: 10px;
 }
 
 .results-list li {
@@ -333,9 +385,7 @@ body {
 }
 
 .detection-options .MuiFormControlLabel-root {
-  margin: 0;
   color: var(--text-color);
-  gap: 10px !important;
 }
 
 .MuiFormControlLabel-root .MuiFormControlLabel-label {
@@ -475,7 +525,6 @@ body {
 
 /* Optional: if you want the switches themselves centered */
 .switch-container .MuiFormControlLabel-root {
-  margin: 0;
   justify-content: flex-start;
   width: 100%;
 }
@@ -519,11 +568,6 @@ body {
   color: var(--text-accent-color);
   font-family: 'Frutiger Bold', sans-serif;
   font-size: 24px;
-  margin: 0;
-}
-
-/* Adjust switch styling to match your theme */
-.test-mode-content .MuiFormControlLabel-root {
   margin: 0;
 }
 
@@ -616,8 +660,9 @@ body {
 }
 
 .timeline-container {
+  width: 100%;
   opacity: 0;
-  transition: opacity 0.3s ease-in-out;
+  transition: opacity 0.3s ease-in-out, width 0.5s ease-out;
 }
 
 .timeline-container.fade-in {
@@ -626,4 +671,100 @@ body {
 
 .timeline-container.fade-out {
   opacity: 0;
+}
+
+/* Update timeline styles */
+.timeline-wrapper {
+  width: 100%;
+  overflow: hidden;
+  transition: width 0.5s ease-out;
+}
+
+.timeline-svg {
+  width: 100%;
+  height: 100%;
+  transition: width 0.5s ease-out;
+}
+
+/* Update results container */
+.results-container {
+  width: 100%;
+  position: relative;
+  transition: width 0.5s ease-out;
+}
+
+.timeline-container {
+  width: 100%;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out, width 0.5s ease-out;
+}
+
+/* Ensure all parent containers properly transition */
+.container {
+  width: 100%;
+  transition: width 0.5s ease-out;
+}
+
+.main-content {
+  width: 100%;
+  transition: width 0.5s ease-out;
+}
+
+/* Add these new styles */
+.results-content-wrapper {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+}
+
+.results-stats {
+  flex: 0 0 300px; /* Fixed width of 300px */
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px 20px 100px 20px; /* top right bottom left */
+  height: fit-content;
+}
+
+.results-stats p {
+  padding:5px 0;
+  gap:8px;
+  font-size: .75em;
+}
+
+/* Update existing results list styles */
+.results-list {
+  flex: 1; /* Takes remaining space */
+}
+
+.results-stats .duration-change {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom:10px;
+    margin-bottom:20px;
+}
+
+.results-stats .duration-change h4 {
+    font-size: 14px;
+    text-transform: uppercase;
+    color: var(--text-color);
+}
+
+.results-stats .duration-value {
+    font-size: 18px !important;
+    font-weight: bold;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.results-stats .duration-value.positive {
+    color: var(--added-clip-color);
+}
+
+.results-stats .duration-value.negative {
+    color: var(--deleted-clip-color);
+}
+
+.results-stats .duration-value .percentage {
+    font-size: 14px;
+    opacity: 0.8;
 }

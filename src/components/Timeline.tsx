@@ -22,6 +22,21 @@ const legendItems = [
   { label: 'Silence', class: 'silence' }
 ]
 
+const getClipColor = (clip: Clip, changes: Change[]): string => {
+  const change = changes.find((c: Change) => Math.abs(c.revisedPosition - clip.POSITION) < TOLERANCE)
+
+  // Check for deleted clips first
+  if (clip.isDeleted) return 'deleted'
+  
+  if (!change) return 'unchanged'
+  
+  if (change.detectionMethod === 'silence') return 'silence'
+  
+  return change.type === 'added' ? 'added' : 
+         change.type === 'changed' ? 'modified' : 
+         change.type === 'deleted' ? 'deleted' : 'unchanged'
+}
+
 export const Timeline: React.FC<TimelineProps> = ({
   revisedClips,
   width,
@@ -74,30 +89,6 @@ export const Timeline: React.FC<TimelineProps> = ({
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`);
 
-    // Updated color determination function
-    const getClipColor = (clip: Clip): string => {
-      const change = changes.find(c => Math.abs(c.revisedPosition - clip.POSITION) < TOLERANCE)
-      /*
-      console.log('Processing clip color:', {
-        position: clip.POSITION,
-        change,
-        isSilence: change?.detectionMethod === 'silence'
-      })
-      */
-
-        // Check for deleted clips first
-      if (clip.isDeleted) return 'deleted'
-      
-      //const change = changes.find(c => Math.abs(c.revisedPosition - clip.POSITION) < TOLERANCE)
-      if (!change) return 'unchanged'
-      
-      if (change.detectionMethod === 'silence') return 'silence'
-      
-      return change.type === 'added' ? 'added' : 
-             change.type === 'changed' ? 'modified' : 
-             change.type === 'deleted' ? 'deleted' : 'unchanged'
-    }
-
     // Draw clips in the center of the available space
     const clipHeight = 200; // Increased height for better visibility
     const yOffset = ((height - clipHeight) / 2.5) + 10; // Add 20px padding by shifting clips down
@@ -125,7 +116,7 @@ export const Timeline: React.FC<TimelineProps> = ({
       .enter()
       .append('rect')
       .attr('class', d => {
-        const status = getClipColor(d)
+        const status = getClipColor(d, changes)
         const isOffset = overlappingClips?.includes(d.POSITION)
         return `timeline-clip ${status}${isOffset ? ' offset' : ''}`
       })
@@ -144,7 +135,7 @@ export const Timeline: React.FC<TimelineProps> = ({
     // Add "Revised" label
     headerGroup.append('text')
       .attr('class', 'timeline-label')
-      .attr('x', 0)
+      .attr('x', 10)
       .text('Revised project timeline')
 
     // Add legend group
@@ -192,13 +183,16 @@ export const Timeline: React.FC<TimelineProps> = ({
   }, [revisedClips, changes, width, height]);
 
   return (
-    <svg 
-      ref={svgRef}
-      className="timeline-svg"
-      style={{
-        height: height,
-        width: width
-      }}
-    />
+    <div className="timeline-wrapper" style={{ width: '100%' }}>
+      <svg 
+        ref={svgRef}
+        className="timeline-svg"
+        style={{
+          height: height,
+          width: width,
+          transition: 'width 0.5s ease-out' // Match container transition
+        }}
+      />
+    </div>
   );
 }; 

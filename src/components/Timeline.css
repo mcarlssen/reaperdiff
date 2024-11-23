@@ -5,7 +5,9 @@
 
 .timeline-label {
   fill: var(--text-color);
-  font-size: 14px;
+  font-size: 16px;
+  text-transform: uppercase;
+  font-weight: bold;
 }
 
 .timeline-axis {
