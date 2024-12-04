@@ -7,6 +7,7 @@ import { detectAddedClips } from './detectAddedClips';
 import { detectDeletedClips } from './detectDeletedClips';
 import { detectMovedClips } from './detectMovedClips';
 import { ignoreMute, TOLERANCE } from '../constants'
+import { detectSplitClips } from './detectSplitClips'
 
 interface DetectionResult {
   changedPositions: number[];
@@ -34,25 +35,45 @@ export async function detectChanges(
   const changes = new Map<number, Change>();
   
   // First detect moved clips
-  const { movedClips, silentGaps } = detectMovedClips(controlClips, revisedClips);
+  const { movedClips, silentGaps } = detectMovedClips(controlClips, revisedClips)
+  
+  // Track all positions that have been processed
+  const processedPositions = new Set<number>()
   
   // Add moved clips and silent gaps to changes
-  movedClips.forEach((change, position) => changes.set(position, change));
-  silentGaps.forEach((change, position) => changes.set(position, change));
+  movedClips.forEach((change, position) => {
+    changes.set(position, change)
+    if (change.controlPosition !== undefined)
+      processedPositions.add(change.controlPosition)
+  })
+  silentGaps.forEach((change, position) => {
+    changes.set(position, change)
+    if (change.controlPosition !== undefined)
+      processedPositions.add(change.controlPosition)
+  })
+
+  // Detect split clips before deletions
+  const splitClipChanges = detectSplitClips(controlClips, revisedClips)
+  splitClipChanges.forEach((change, position) => {
+    changes.set(position, change)
+    // Add both the control and revised positions to processed set
+    if (change.controlPosition !== undefined)
+      processedPositions.add(change.controlPosition)
+    if (change.revisedPosition !== undefined)
+      processedPositions.add(change.revisedPosition)
+  })
 
   // Then detect remaining deletions and offset changes
   if (options.detectAddsDeletes) {
     const { deletedClips, changedClips } = detectDeletedClips(
-      controlClips.filter(clip => 
-        !Array.from(movedClips.values())
-          .some(change => change.controlPosition === clip.POSITION)
-      ),
+      // Filter out any clips that have already been processed
+      controlClips.filter(clip => !processedPositions.has(clip.POSITION)),
       revisedClips
-    );
-    
+    )
+
     // Add remaining changes
     deletedClips.forEach(clip => {
-      if (!changes.has(clip.POSITION))
+      if (!processedPositions.has(clip.POSITION))
         changes.set(clip.POSITION, {
           revisedPosition: clip.POSITION,
           type: 'deleted',
@@ -60,11 +81,11 @@ export async function detectChanges(
           controlLength: clip.LENGTH,
           controlOffset: clip.OFFSET || 0,
           detectionMethod: 'position'
-        });
-    });
+        })
+    })
 
     changedClips.forEach(clip => {
-      if (!changes.has(clip.POSITION))
+      if (!processedPositions.has(clip.POSITION))
         changes.set(clip.POSITION, {
           revisedPosition: clip.POSITION,
           type: 'changed',
@@ -72,28 +93,46 @@ export async function detectChanges(
           controlLength: clip.LENGTH,
           controlOffset: clip.OFFSET || 0,
           detectionMethod: 'offset'
-        });
-    });
+        })
+    })
   }
 
   // Then detect added clips
   revisedClips.forEach(revisedClip => {
     // Skip if we already detected a change at this position
-    if (changes.has(revisedClip.POSITION)) return;
+    if (changes.has(revisedClip.POSITION)) return
     
     // Skip deleted clips
-    if (revisedClip.isDeleted) return;
+    if (revisedClip.isDeleted) return
 
     // Check if this clip exists in control
-    const controlClip = findMatchingClip(revisedClip, controlClips);
-    if (!controlClip) {
-      changes.set(revisedClip.POSITION, {
-        revisedPosition: revisedClip.POSITION,
-        type: 'added',
-        detectionMethod: 'fingerprint'
-      });
+    const matchResult = findMatchingClip(revisedClip, controlClips)
+    
+    switch (matchResult.type) {
+      case 'exact':
+        // No change needed
+        break
+        
+      case 'split':
+        changes.set(revisedClip.POSITION, {
+          revisedPosition: revisedClip.POSITION,
+          type: 'changed',
+          controlPosition: matchResult.match!.POSITION,
+          controlLength: matchResult.match!.LENGTH,
+          controlOffset: matchResult.match!.OFFSET || 0,
+          detectionMethod: 'split'
+        })
+        break
+        
+      case 'none':
+        changes.set(revisedClip.POSITION, {
+          revisedPosition: revisedClip.POSITION,
+          type: 'added',
+          detectionMethod: 'fingerprint'
+        })
+        break
     }
-  });
+  })
 
   if (verbose) {
     console.log('Final changes:', Array.from(changes.values()));

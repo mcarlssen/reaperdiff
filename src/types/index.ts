@@ -5,7 +5,7 @@ export interface Clip {
   isDeleted?: boolean;
   MUTE?: boolean;
   NAME?: string;
-  IGUID?: string;
+  FILE?: string;
 }
 
 export interface Change {
@@ -14,7 +14,7 @@ export interface Change {
   controlPosition?: number;
   controlLength?: number;
   controlOffset?: number;
-  detectionMethod: 'overlap' | 'fingerprint' | 'position' | 'length' | 'addsdeletes' | 'offset' | 'moved' | 'silence';
+  detectionMethod: 'overlap' | 'fingerprint' | 'position' | 'length' | 'addsdeletes' | 'offset' | 'moved' | 'silence' | 'split' | 'file';
 }
 
 export interface ClipFingerprint {

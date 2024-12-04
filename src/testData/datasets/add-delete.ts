@@ -99,7 +99,18 @@ const revisedRPP = String.raw`<REAPER_PROJECT ...>
     <ITEM
       POSITION 0
       SNAPOFFS 0
-      LENGTH 6.18
+      LENGTH 3.18
+      MUTE 0 0
+      NAME 01-241016_2016.wav
+      SOFFS 11.8265
+      <SOURCE WAVE
+        FILE "01-241016_2016.wav"
+      >
+    >
+    <ITEM
+      POSITION 3.18
+      SNAPOFFS 0
+      LENGTH 2.99999999993482
       MUTE 0 0
       NAME 01-241016_2016.wav
       SOFFS 11.8265
@@ -135,7 +146,7 @@ const revisedRPP = String.raw`<REAPER_PROJECT ...>
       NAME 01-241016_2016.wav
       SOFFS 28.5336048507069
       <SOURCE WAVE
-        FILE "01-241016_2016.wav"
+        FILE "01-241016_2016-b.wav"
       >
     >
     <ITEM

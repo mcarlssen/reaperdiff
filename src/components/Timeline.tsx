@@ -186,7 +186,7 @@ export const Timeline: React.FC<TimelineProps> = ({
     <div className="timeline-wrapper" style={{ width: '100%' }}>
       <svg 
         ref={svgRef}
-        className="timeline-svg"
+        className="timeline-svg bordered"
         style={{
           height: height,
           width: width,

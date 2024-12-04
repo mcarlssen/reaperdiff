@@ -13,12 +13,11 @@
 }
 
 :root {
-    --primary-bg: #2e2836; /* raisin black */
-    --secondary-bg: #3c3446;
-    --border-color: #50455e;
-/*    --primary-bg: #1a1a1a; 
-    --secondary-bg: #2a2a2a;
-    --border-color: #3a3a3a; */
+    --primary-bg: #211D28; /* 2e2836, raisin black */
+    --secondary-bg: #2E2836; /* 3c3446 */
+    --tertiary-bg: #3c3446; /* 3f3a46 */
+
+    --border-color: #50455e; /* 50455e */
     --border-color-light: #4e4e4e;
     --text-color: #ddd;
     --text-accent-color: #ebb400;
@@ -29,7 +28,36 @@
     --modified-clip-color: #f5853f;
     --unchanged-clip-color: #086788;
     --silence-clip-color: #2e2836aa;
+
+    --border-top: #50455e;
+    --border-sides: #3B3245;
+    --border-bottom: #352D3E;
+
+    --border-style-top: 1px solid var(--border-top);
+    --border-style-bottom: 1px solid var(--border-bottom);
+    --border-style-sides: 1px solid var(--border-sides);
 }
+
+/* interesting color palettes
+
+Based on 211D28 (darker 'raisin black')
+#292432
+#211d28
+#e4e1ea
+#f2f0f4
+#7c665a
+#5a7c66
+
+Based on #719150 (darker 'apple green')
+#507191
+#7f9fc1
+#719150
+#a1c17d
+#915071
+#c37e9f
+plus #917050 for silence?
+
+*/
 
 /* Add these global styles */
 * {
@@ -40,17 +68,66 @@
 }
 
 body {
-    background-color: var(--primary-bg);
+    /* Keep base styles */
     color: var(--text-color);
+    min-height: 100vh;
+    margin: 0;
+    position: relative; /* For pseudo-element positioning */
+}
+
+/* Create a pseudo-element for the background */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    
+    /* Update background styles for sliding effect */
+    background-image: url('../public/background-gradient-seamless.png');
+    background-position: center;
+    background-repeat: none;  /* Only repeat horizontally */
+    background-size: 100% 100%;  /* Make background twice as wide */
+    filter: brightness(1.6) saturate(0.7);
+    /*    animation: slideBackground 900s linear infinite;*/
+
+}
+
+/* Add new pseudo-element for SVG layer */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;  /* Higher than ::before (-1) but still behind content (0) */
+    
+    background-image: url('../public/background-texture.svg');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    opacity: 1;  /* Adjust this value to control SVG visibility */
+    pointer-events: none;  /* Ensures clicks pass through to elements below */
+}
+
+/* Create a utility class for the border style */
+.bordered {
+    border-top: var(--border-style-top);
+    border-bottom: var(--border-style-bottom);
+    border-left: var(--border-style-sides);
+    border-right: var(--border-style-sides);
 }
 
 .app-container {
     display: grid;
     grid-template-rows: 100px 1fr 40px;
     min-height: 880px;
-    width: min(1200px, calc(100% - 40px));
+    width: min(1300px, calc(100% - 0px));
     margin: 0 auto;
-    background-color: var(--primary-bg);
+    padding:10px;
     overflow: hidden;
     transition: width 0.5s ease-in-out;
 }
@@ -84,8 +161,28 @@ body {
     display: flex;
     height: 100%;
     border-radius: 15px;
-    border-bottom: 1px solid var(--border-color);
+    filter: drop-shadow(7px 10px 12px rgba(0, 0, 0, 0.4));
 
+    background-image: linear-gradient(
+        175deg,
+        var(--primary-bg) 0%,
+        var(--tertiary-bg) 50%,
+        var(--primary-bg) 100%
+    );
+    background-size: 100% 200%;
+    animation: gradientRotate 24s ease-in-out infinite;
+}
+
+@keyframes gradientRotate {
+    0% {
+        background-position: 50% 0%;
+    }
+    50% {
+        background-position: 50% 100%;
+    }
+    100% {
+        background-position: 50% 0%;
+    }
 }
 
 .banner-left {
@@ -116,7 +213,7 @@ body {
 
 .container {
     grid-row: 1 / -1;
-    background-color: var(--secondary-bg);
+    background-color: color-mix(in srgb, var(--secondary-bg) 70%, transparent);
     border-radius: 15px;
     padding: 20px;
     min-height: 100%;
@@ -233,9 +330,9 @@ body {
 }
 
 .compare-button:disabled {
-  opacity: 0.5;
+  opacity: 0.8;
   cursor: not-allowed;
-  background-color: var(--border-color);
+  background-color: var(--tertiary-bg);
   border: 1px solid var(--border-color-light);
 }
 
@@ -246,17 +343,17 @@ body {
 }
 
 /* Ready state (both files) */
-.compare-button.ready {
+.compare-button.ready, .compare-button.clear-button {
   background-color: var(--text-accent-color);
   color: var(--primary-bg);
 }
 
 /* Hover states */
 .compare-button.partial:hover {
-  background-color: var(--border-color);
+  background-color: var(--tertiary-bg);
 }
 
-.compare-button.ready:hover {
+.compare-button.ready:hover, .compare-button.clear-button:hover {
   background-color: #cc9900;  /* Darker yellow */
 }
 
@@ -296,7 +393,6 @@ body {
   position: relative;
   margin-top: 40px;
   padding: 0px;
-  border-top: 1px solid var(--border-color);
   border-radius: 8px;
   width: 100%;
   box-sizing: border-box;
@@ -310,6 +406,9 @@ body {
 }
 
 .results-list-header {
+  max-width: 1500px;
+  margin: 0 auto;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -371,7 +470,7 @@ body {
 
 .results-container svg {
   margin-top: 0px;
-  background-color: var(--border-color);
+  background-color: var(--tertiary-bg);
   border-radius: 8px;
   padding: 10px;
   width: 100%;
@@ -537,9 +636,10 @@ body {
 }
 
 .test-mode-indicator {
-  margin: 20px 0;
-  height: 122px;  /* Match dropzone container height */
-  background-color: rgba(235, 180, 0, 0.05);  /* Using your existing yellow fade */
+  max-width: 1500px;
+  margin: 20px auto;
+  height: 122px;
+  background-color: rgba(235, 180, 0, 0.05);
   border: 2px solid var(--text-accent-color);
   border-radius: 4px;
   display: flex;
@@ -633,7 +733,6 @@ body {
   color: var(--error-color);
   padding: 16px;
   text-align: center;
-  border: 1px solid var(--error-color);
   border-radius: 4px;
   margin: 16px 0;
 }
@@ -712,20 +811,67 @@ body {
 
 /* Add these new styles */
 .results-content-wrapper {
-  display: flex;
-  gap: 20px;
+  max-width: 1500px;
+  margin: 0 auto;
   width: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  justify-content: space-between; /* Helps with spacing */
 }
 
 .results-stats {
-  flex: 0 0 300px; /* Fixed width of 300px */
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 20px 20px 100px 20px; /* top right bottom left */
-  height: fit-content;
+  min-width: 280px;
+  min-height: 240px;
 }
 
-.results-stats p {
+.results-stats, .results-data {
+    background-color: color-mix(in srgb, var(--tertiary-bg) 70%, transparent);
+    border-radius: 8px;
+    padding: 20px;
+    height: fit-content; /* This ensures minimum height based on content */
+}
+
+.results-data .stat-group {
+    flex: 1;
+    text-align: center;
+}
+
+/* Optional: if you want to ensure the stat groups are vertically centered */
+.results-data {
+    min-width: 500px;
+    min-height: 240px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: start; /* This centers the content vertically */
+}
+/* Keep existing styles */
+.results-data .stat-group h4 {
+    font-size: 20px;
+    text-transform: uppercase;
+    color: var(--text-color);
+    opacity: 0.8;
+    padding-bottom: 15px;
+}
+
+.duration-change h4 {
+  margin-bottom: 20px;
+}
+
+.results-data .duration-value {
+    font-size: 40px;
+    font-weight: bold;
+    padding: 0;
+}
+
+.results-list {
+  flex: 0 0 800px; /* Fixed width, don't grow or shrink */
+  min-width: 0; /* Prevent flex item from overflowing */
+}
+
+.results-stats p, .results-data p {
   padding:5px 0;
   gap:8px;
   font-size: .75em;
@@ -733,38 +879,93 @@ body {
 
 /* Update existing results list styles */
 .results-list {
-  flex: 1; /* Takes remaining space */
+  flex: 1;
+  min-width: 0;
 }
 
-.results-stats .duration-change {
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom:10px;
-    margin-bottom:20px;
+.results-list-content {
+  width: 100%;
+}
+
+.results-list ul {
+  list-style: none;
+  width: 100%;
 }
 
 .results-stats .duration-change h4 {
-    font-size: 14px;
+    font-size: 20px;
     text-transform: uppercase;
     color: var(--text-color);
+    opacity: 0.8;
+    padding-bottom: 15px;
 }
 
 .results-stats .duration-value {
-    font-size: 18px !important;
+    font-size: 40px;
     font-weight: bold;
     display: flex;
     align-items: baseline;
-    gap: 8px;
+    padding:0;
 }
 
-.results-stats .duration-value.positive {
+.duration-value.positive {
     color: var(--added-clip-color);
 }
 
-.results-stats .duration-value.negative {
+.duration-value.negative {
     color: var(--deleted-clip-color);
 }
 
-.results-stats .duration-value .percentage {
-    font-size: 14px;
+.duration-value.unchanged {
+    color: var(--unchanged-clip-color);
+}
+
+.duration-value.percentage {
+    font-size: 28px;
     opacity: 0.8;
+}
+
+.button-container {
+  max-width: 1500px;
+  margin: 20px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.compare-button-container {
+  width: 100%; /* Take full width of parent */
+  display: flex;
+  justify-content: center;
+}
+
+.results-data .stat-group {
+    margin-bottom: 20px;
+}
+
+.results-data .stat-group h4 {
+    font-size: 20px;
+    text-transform: uppercase;
+    color: var(--text-color);
+    opacity: 0.8;
+    padding-bottom: 15px;
+}
+
+.results-data .duration-value {
+    font-size: 40px;
+    font-weight: bold;
+    padding: 0;
+}
+
+/* Add these styles to fix the background and border issues */
+.results-stats, .results-data {
+    background-color: color-mix(in srgb, var(--tertiary-bg) 70%, transparent);
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.bordered {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
 }

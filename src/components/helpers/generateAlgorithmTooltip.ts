@@ -50,6 +50,14 @@ const algorithmDescriptions: Record<string, AlgorithmDescription> = {
       '• Different position on timeline',
       '• May create silent gaps at original position'
     ]
+  },
+  file: {
+    name: 'File Change Detection',
+    criteria: [
+      'Identifies clips that have:',
+      '• Same position and length',
+      '• Different source audio file'
+    ]
   }
 }
 

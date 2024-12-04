@@ -18,17 +18,18 @@ export function detectAddedClips(
     const nextClip = revisedClips[i + 1]
 
     // If current clip has no fingerprint match in control
-    if (!findMatchingClip(currentClip, controlClips)) {
+    const currentMatch = findMatchingClip(currentClip, controlClips)
+    if (currentMatch.type === 'none') {
       // Find matches for surrounding clips
       const priorMatch = findMatchingClip(priorClip, controlClips)
       const nextMatch = findMatchingClip(nextClip, controlClips)
 
-      if (priorMatch && nextMatch) {
+      if (priorMatch.match && nextMatch.match) {
         // Calculate expected position of next clip in control file
-        const expectedNextPosition = priorMatch.POSITION + priorMatch.LENGTH
+        const expectedNextPosition = priorMatch.match.POSITION + priorMatch.match.LENGTH
 
         // If next clip's position matches (accounting for tolerance)
-        if (Math.abs(nextMatch.POSITION - expectedNextPosition) < TOLERANCE) {
+        if (Math.abs(nextMatch.match.POSITION - expectedNextPosition) < TOLERANCE) {
           // This is definitely a new clip
           newClipPositions.push(currentClip.POSITION)
         }

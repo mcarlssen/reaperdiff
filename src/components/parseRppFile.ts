@@ -21,7 +21,7 @@ export async function parseRppFile(file: File | string, verbose: boolean): Promi
   const isFullRPP = data.includes('<TRACK')
   
   if (verbose) {
-    console.log(`Parsing ${isFullRPP ? 'full RPP file' : 'test dataset'}`)
+    console.log(`Running in ${isFullRPP ? 'interactive mode, using uploaded RPP file' : 'test mode, using test dataset'}`)
   }
 
   for (let i = 0; i < lines.length; i++) {
@@ -66,8 +66,10 @@ export async function parseRppFile(file: File | string, verbose: boolean): Promi
         currentClip.LENGTH = parseFloat(line.split(' ')[1])
       } else if (line.startsWith('NAME')) {
         currentClip.NAME = line.split('"')[1]
-      } else if (line.startsWith('IGUID')) {
-        currentClip.IGUID = line.split('{')[1].split('}')[0]
+      } else if (line.startsWith('FILE')) {
+        // Extract file path from FILE line
+        const match = line.match(/FILE\s+"([^"]+)"/)
+        if (match) currentClip.FILE = match[1]
       } else if (line === '>' && !trackState.isInTrack) {
         if (currentClip.POSITION !== undefined && currentClip.LENGTH !== undefined) {
           if (!currentClip.MUTE) {
@@ -83,6 +85,13 @@ export async function parseRppFile(file: File | string, verbose: boolean): Promi
 
   if (verbose) {
     console.log(`Parsed ${clips.length} clips (excluding muted tracks/clips)`)
+  }
+  
+  if (verbose) {
+    console.log('Parsed clips with files:', clips.map(c => ({
+      position: c.POSITION,
+      file: c.FILE
+    })))
   }
   
   return sortedClips
