@@ -10,6 +10,7 @@ import { generateAlgorithmTooltip } from './components/helpers/generateAlgorithm
 import { testDatasets, getDatasetById } from './testData/index';
 import { chaoticOrbit } from 'ldrs'
 import { calculateTotalDuration, formatDuration } from './utils/duration'
+import { Sparkle, Backspace, ArrowsLeftRight, CirclesThree } from "@phosphor-icons/react"
 
 chaoticOrbit.register()
 
@@ -419,7 +420,8 @@ export default function App() {
                             return (
                                 <>
                                     <div className="results-list-header">
-                                        <p>Found {changes.length} change{changes.length !== 1 ? 's' : ''}:</p>
+                                        {/*<p>Found {changes.length} change{changes.length !== 1 ? 's' : ''}:</p>*/}
+                                        <p>&nbsp;</p>
                                         {changes.length > 10 && (
                                             <FormControlLabel
                                                 control={
@@ -516,6 +518,19 @@ export default function App() {
                                                                 }
                                                             })()
 
+                                                            const IconComponent = (() => {
+                                                                switch (change.type) {
+                                                                    case 'added':
+                                                                        return Sparkle
+                                                                    case 'deleted':
+                                                                        return Backspace
+                                                                    case 'changed':
+                                                                        return ArrowsLeftRight
+                                                                    default:
+                                                                        return CirclesThree
+                                                                }
+                                                            })()
+
                                                             return (
                                                                 <li 
                                                                     key={index}
@@ -523,6 +538,9 @@ export default function App() {
                                                                     onMouseLeave={() => setHoveredPosition(null)}
                                                                     className={`result-item ${change.type}`}
                                                                 >
+                                                                    <div className="icon-wrapper">
+                                                                        <IconComponent size={18} weight="light" />
+                                                                    </div>
                                                                     {changeDescription}
                                                                 </li>
                                                             )
