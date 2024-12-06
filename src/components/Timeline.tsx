@@ -12,6 +12,7 @@ interface TimelineProps {
   changes: Change[];
   hoveredPosition: number | null;
   overlappingClips: number[];
+  onHover?: (position: number | null) => void;
 }
 
 const legendItems = [
@@ -43,11 +44,14 @@ export const Timeline: React.FC<TimelineProps> = ({
   height,
   changes,
   hoveredPosition,
-  overlappingClips
+  overlappingClips,
+  onHover
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
 
+  // Main effect for initial render
   useEffect(() => {
+    /*
     console.log('Timeline received clips:', {
       total: revisedClips.length,
       deleted: revisedClips.filter(clip => clip.isDeleted).length,
@@ -59,6 +63,7 @@ export const Timeline: React.FC<TimelineProps> = ({
       changes,
       svgRef: svgRef.current
     });
+    */
 
     if (!svgRef.current || !revisedClips.length) {
       console.log('Early return due to:', {
@@ -118,7 +123,8 @@ export const Timeline: React.FC<TimelineProps> = ({
       .attr('class', d => {
         const status = getClipColor(d, changes)
         const isOffset = overlappingClips?.includes(d.POSITION)
-        return `timeline-clip ${status}${isOffset ? ' offset' : ''}`
+        const isHovered = hoveredPosition === d.POSITION
+        return `timeline-clip ${status}${isOffset ? ' offset' : ''}${isHovered ? ' hovered' : ''}`
       })
       .attr('x', (d, i) => xScale(d.POSITION) + i * clipSpacing)
       .attr('y', d => yOffset + getClipYOffset(d))
@@ -126,6 +132,24 @@ export const Timeline: React.FC<TimelineProps> = ({
       .attr('height', clipHeight)
       .append('title')
       .text(d => generateTooltip(d, changes))
+
+    clipGroup.selectAll('rect')
+      .on('mouseenter.timeline', function(event, d: any) {
+        event.stopPropagation()
+        const position = d.POSITION
+        /*
+        console.log('Timeline clip hover enter:', {
+          position,
+          clipData: d
+        })
+        */
+        onHover?.(position)
+      })
+      .on('mouseleave.timeline', function(event) {
+        event.stopPropagation()
+        //console.log('Timeline clip hover leave')
+        onHover?.(null)
+      })
 
     // Add header group with label and legend
     const headerGroup = svg.append('g')
@@ -179,8 +203,31 @@ export const Timeline: React.FC<TimelineProps> = ({
       .attr('class', 'timeline-axis')
       .attr('transform', `translate(0, ${height - 30})`)
       .call(xAxis);
-
   }, [revisedClips, changes, width, height]);
+
+  // Separate effect for hover state updates
+  useEffect(() => {
+    if (!svgRef.current) return
+
+    const svg = d3.select(svgRef.current)
+    
+    svg.selectAll('.clips-revised .timeline-clip')
+      .each(function(d: any) {
+        const clip = d3.select(this)
+        const status = getClipColor(d, changes)
+        const isOffset = overlappingClips?.includes(d.POSITION)
+        const isHovered = hoveredPosition === d.POSITION
+        
+        /*
+        console.log('Updating clip class on hover:', {
+          position: d.POSITION,
+          isHovered,
+          hoveredPosition
+        })
+        */      
+        clip.attr('class', `timeline-clip ${status}${isOffset ? ' offset' : ''}${isHovered ? ' hovered' : ''}`)
+      })
+  }, [hoveredPosition, changes, overlappingClips]);
 
   return (
     <div className="timeline-wrapper" style={{ width: '100%' }}>
@@ -190,9 +237,9 @@ export const Timeline: React.FC<TimelineProps> = ({
         style={{
           height: height,
           width: width,
-          transition: 'width 0.5s ease-out' // Match container transition
+          transition: 'width 0.5s ease-out'
         }}
       />
     </div>
   );
-}; 
+};  

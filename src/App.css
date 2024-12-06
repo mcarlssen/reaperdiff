@@ -26,7 +26,7 @@
     --added-clip-color: #719150;
     --deleted-clip-color: #bf4136;
     --modified-clip-color: #f5853f;
-    --unchanged-clip-color: #086788;
+    --unchanged-clip-color: #456672; /* 086788 */
     --silence-clip-color: #2e2836aa;
 
     --border-top: #50455e;
@@ -615,6 +615,22 @@ body::after {
     color: var(--modified-clip-color);
 }
 
+/* Add styles for hovered state of result items */
+.result-item.hovered {
+  color: var(--text-accent-color);
+  filter: brightness(1.5);
+}
+
+/* Update existing hover styles to match the hovered class */
+.result-item:hover,
+.result-item.added:hover,
+.result-item.deleted:hover,
+.result-item.changed:hover {
+  filter: brightness(1.5);
+  color: var(--text-accent-color);
+}
+
+
 .algorithm-tooltip {
     white-space: pre-line;
 }
@@ -828,8 +844,9 @@ body::after {
   justify-content: space-between; /* Helps with spacing */
 }
 
+/* contains Duration value */
 .results-stats {
-  min-width: 280px;
+  width:240px;
   min-height: 240px;
 }
 
@@ -845,16 +862,26 @@ body::after {
     text-align: center;
 }
 
-/* Optional: if you want to ensure the stat groups are vertically centered */
+/* Contains added, deleted, and modified clips counts */
 .results-data {
-    width: 400px;
+    width: 300px;
     min-height: 240px;
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    gap: 20px;
-    align-items: start; /* This centers the content vertically */
+    flex-direction: column;
+    gap: 16px;
 }
+
+.stat-row {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+}
+
+.stat-group {
+    text-align: center;
+    gap: 12px;
+}
+
 /* Keep existing styles */
 .results-data .stat-group h4 {
     font-size: 20px;
@@ -864,20 +891,59 @@ body::after {
     padding-bottom: 15px;
 }
 
-.duration-change h4 {
-  margin-bottom: 20px;
+/*
+.results-data .stat-group h4 {
+  font-size: 20px;
+  text-transform: uppercase;
+  color: var(--text-color);
+  opacity: 0.8;
+  padding-bottom: 15px;
 }
+*/
 
 .results-data .duration-value {
-    font-size: 40px;
-    font-weight: bold;
-    padding: 0;
+  font-size: 40px;
+  font-weight: bold;
+  padding: 10px 0;
 }
 
-.results-stats p, .results-data p {
-  padding:5px 0;
-  gap:8px;
-  font-size: .75em;
+.duration-value.percentage {
+  filter: saturate(.75);
+  font-size: 14px;
+    opacity: 0.8;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.duration-change {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+}
+
+/*
+.duration-change h4 {
+    width: 100%;
+    text-align: center;
+}
+*/
+
+.duration-value.percentage .duration-change-time {
+    font-size: 24px;  /* 4px larger than base */
+    filter: brightness(1);
+
+}
+
+.duration-value.percentage .duration-change-percent {
+    font-size: 16px;
+    font-style: italic;
+    filter: brightness(.8);
+
 }
 
 .results-stats .duration-change h4 {
@@ -886,10 +952,18 @@ body::after {
     color: var(--text-color);
     opacity: 0.8;
     padding-bottom: 15px;
+    width: 100%;  /* Header takes full width */
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.results-stats p, .results-data p {
+  padding:5px 0;
+  font-size: .75em;
 }
 
 .results-stats .duration-value {
-    font-size: 40px;
+    font-size: 52px;
     font-weight: bold;
     display: flex;
     align-items: baseline;
@@ -908,11 +982,6 @@ body::after {
     color: var(--unchanged-clip-color);
 }
 
-.duration-value.percentage {
-    font-size: 28px;
-    opacity: 0.8;
-}
-
 .button-container {
   max-width: 1500px;
   margin: 20px auto;
@@ -926,31 +995,6 @@ body::after {
   width: 100%; /* Take full width of parent */
   display: flex;
   justify-content: center;
-}
-
-.results-data .stat-group {
-    margin-bottom: 20px;
-}
-
-.results-data .stat-group h4 {
-    font-size: 20px;
-    text-transform: uppercase;
-    color: var(--text-color);
-    opacity: 0.8;
-    padding-bottom: 15px;
-}
-
-.results-data .duration-value {
-    font-size: 40px;
-    font-weight: bold;
-    padding: 0;
-}
-
-/* Add these styles to fix the background and border issues */
-.results-stats, .results-data {
-    background-color: color-mix(in srgb, var(--tertiary-bg) 70%, transparent);
-    border-radius: 8px;
-    padding: 20px;
 }
 
 .bordered {
@@ -978,3 +1022,14 @@ body::after {
     background: none;
     padding: 0;
 }
+
+/* Add styling for new details section */
+.results-list-details {
+    width: 300px;
+    min-height: 240px;
+    background-color: color-mix(in srgb, var(--tertiary-bg) 70%, transparent);
+    border-radius: 8px;
+    padding: 20px;
+    height: fit-content;
+}
+

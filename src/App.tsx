@@ -10,7 +10,7 @@ import { generateAlgorithmTooltip } from './components/helpers/generateAlgorithm
 import { testDatasets, getDatasetById } from './testData/index';
 import { chaoticOrbit } from 'ldrs'
 import { calculateTotalDuration, formatDuration } from './utils/duration'
-import { Sparkle, Backspace, ArrowsLeftRight, CirclesThree } from "@phosphor-icons/react"
+import { Sparkle, Backspace, ArrowsLeftRight, CirclesThree, ClockCountdown } from "@phosphor-icons/react"
 
 chaoticOrbit.register()
 
@@ -408,6 +408,7 @@ export default function App() {
                                 changes={changes}
                                 hoveredPosition={hoveredPosition}
                                 overlappingClips={overlappingClips}
+                                onHover={setHoveredPosition}
                             />
                         ) : (
                             <p>Loading timeline...</p>
@@ -447,49 +448,63 @@ export default function App() {
                                                 
                                                 return (
                                                     <div className="duration-change">
-                                                        <h4>Duration</h4>
+                                                        <ClockCountdown size={48} alt="Duration" />
                                                         <p className={`duration-value ${
                                                             durationChange === 0 ? 'unchanged' : 
                                                             durationChange > 0 ? 'positive' : 
                                                             'negative'
                                                         }`}>
                                                             {formatDuration(revisedDuration)}</p>
-                                                        <p><span className={`duration-value percentage ${
-                                                            durationChange === 0 ? 'unchanged' : 
-                                                            durationChange > 0 ? 'positive' : 
-                                                            'negative'
-                                                        }`}>
-                                                                {durationChange === 0 ? 
-                                                                    '(unchanged)' : 
-                                                                    `(${durationChange > 0 ? '+' : '-'}${formatDuration(durationChange)}, or ${durationChange > 0 ? '+' : ''}${percentageChange}%)`
-                                                                }
-                                                           </span>
+                                                        <p>
+                                                            <span className={`duration-value percentage ${
+                                                                durationChange === 0 ? 'unchanged' : 
+                                                                durationChange > 0 ? 'positive' : 
+                                                                'negative'
+                                                            }`}>
+                                                                {durationChange === 0 ? '(unchanged)' : (
+                                                                    <>
+                                                                        <span className="duration-change-time">
+                                                                            {`${durationChange > 0 ? '+' : '-'}${formatDuration(durationChange)}`}
+                                                                        </span>
+                                                                        <span className="duration-change-percent">
+                                                                            {`(${percentageChange}%)`}
+                                                                        </span>
+                                                                    </>
+                                                                )}
+                                                            </span>
                                                         </p>
                                                     </div>
                                                 )
                                             })()}
                                         </div>
                                         <div className="results-data bordered">
-                                            <div className="stat-group">
-                                                <h4>Added<br /> Clips</h4>
-                                                <p className={`duration-value ${addedCount > 0 ? 'positive' : ''}`}>
-                                                    {addedCount}
-                                                </p>
+                                            <div className="stat-row">
+                                                <div className="stat-group">
+                                                    <Sparkle size={48} alt="Added" />
+                                                    <p className={`duration-value ${addedCount > 0 ? 'positive' : ''}`}>
+                                                        {addedCount}
+                                                    </p>
+                                                </div>
+                                                <div className="stat-group">
+                                                    <Backspace size={48} alt="Deleted" />
+                                                    <p className={`duration-value ${deletedCount > 0 ? 'negative' : ''}`}>
+                                                        {deletedCount}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div className="stat-group">
-                                                <h4>Deleted Clips</h4>
-                                                <p className={`duration-value ${deletedCount > 0 ? 'negative' : ''}`}>
-                                                    {deletedCount}
-                                                </p>
-                                            </div>
-                                            <div className="stat-group">
-                                                <h4>Modified Clips</h4>
-                                                <p className={`duration-value ${changedCount > 0 ? 'unchanged' : ''}`}>
-                                                    {changedCount}
-                                                </p>
+                                            <div className="stat-row">
+                                                <div className="stat-group">
+                                                    <ArrowsLeftRight size={48} alt="Modified" />
+                                                    <p className={`duration-value ${changedCount > 0 ? 'unchanged' : ''}`}>
+                                                        {changedCount}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="results-list">
+                                        <div className="results-list-details bordered">
+                                            <h4>Clip Details</h4>
+                                        </div>
+                                        <div className="results-list bordered">
                                             <div className={`results-list-content ${isScrollable && changes.length > 10 ? 'scrollable' : ''}`}>
                                                 <ul>
                                                     {changes
@@ -534,9 +549,21 @@ export default function App() {
                                                             return (
                                                                 <li 
                                                                     key={index}
-                                                                    onMouseEnter={() => setHoveredPosition(change.revisedPosition)}
-                                                                    onMouseLeave={() => setHoveredPosition(null)}
-                                                                    className={`result-item ${change.type}`}
+                                                                    onMouseEnter={() => {
+                                                                      /*  
+                                                                      console.log('Results list item hover enter:', {
+                                                                            position: change.revisedPosition
+                                                                        })
+                                                                        */
+                                                                        setHoveredPosition(change.revisedPosition)
+                                                                    }}
+                                                                    onMouseLeave={() => {
+                                                                        //console.log('Results list item hover leave')
+                                                                        setHoveredPosition(null)
+                                                                    }}
+                                                                    className={`result-item ${change.type}${
+                                                                        hoveredPosition === change.revisedPosition ? ' hovered' : ''
+                                                                    }`}
                                                                 >
                                                                     <div className="icon-wrapper">
                                                                         <IconComponent size={18} weight="light" />

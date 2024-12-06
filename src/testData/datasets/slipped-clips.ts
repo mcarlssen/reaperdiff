@@ -147,7 +147,7 @@ const revisedRPP = String.raw`<REAPER_PROJECT ...>
       NAME 01-241016_2016.wav
       SOFFS 43.38303568440803
       <SOURCE WAVE
-        FILE "01-241016_2016.wav"
+        FILE "01-241016_2020.wav"
       >
     >
     <ITEM

@@ -52,6 +52,14 @@
   opacity: 0.7;
 }
 
+.timeline-clip.hovered {
+  stroke: var(--text-accent-color);
+  stroke-width: 3px;
+  filter: brightness(1.2) drop-shadow(0 0 3px var(--text-accent-color));
+  opacity: 1;
+  transition: all 0.1s ease;
+}
+
 .legend-border {
   fill: var(--secondary-bg);
   stroke: var(--primary-bg);
