@@ -1,12 +1,23 @@
 import { Clip } from '../types';
+import { TOLERANCE, verbose } from '../constants';
 
 interface TrackState {
   isMuted: boolean
   isInTrack: boolean
 }
 
-export async function parseRppFile(file: File | string, verbose: boolean): Promise<Clip[]> {
-  const data = typeof file === 'string' ? file : await file.text()
+export async function parseRppFile(
+  input: File | string,
+  label: string = 'file', // Default label if none provided
+): Promise<Clip[]> {
+  const isTestData = typeof input === 'string'
+  const filename = isTestData ? 'test data' : (input as File).name
+
+  if (verbose) {
+    console.log(`Parsing ${label} (${filename}) in interactive mode`)
+  }
+
+  const data = typeof input === 'string' ? input : await input.text()
   const lines = data.split('\n')
   const clips: Clip[] = []
   let currentClip: Partial<Clip> = {}
@@ -84,11 +95,11 @@ export async function parseRppFile(file: File | string, verbose: boolean): Promi
   const sortedClips = clips.sort((a, b) => a.POSITION - b.POSITION)
 
   if (verbose) {
-    console.log(`Parsed ${clips.length} clips (excluding muted tracks/clips)`)
+    console.log(`Parsed ${clips.length} clips from ${label} (excluding muted tracks/clips)`)
   }
   
   if (verbose) {
-    console.log('Parsed clips with files:', clips.map(c => ({
+    console.log(`Parsed clips with files from ${label}:`, clips.map(c => ({
       position: c.POSITION,
       file: c.FILE
     })))

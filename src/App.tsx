@@ -5,17 +5,26 @@ import { Switch, FormControlLabel, Tooltip, Radio, RadioGroup } from '@mui/mater
 import './App.css';
 import { Timeline } from './components/Timeline';
 import { detectChanges } from './components';
-import { Clip, Change } from './types';
+import { Clip, Change, DetectionOptions } from './types';
 import { generateAlgorithmTooltip } from './components/helpers/generateAlgorithmTooltip';
 import { testDatasets, getDatasetById } from './testData/index';
 import { chaoticOrbit } from 'ldrs'
 import { calculateTotalDuration, formatDuration } from './utils/duration'
 import { Sparkle, Backspace, ArrowsLeftRight, CirclesThree, ClockCountdown } from "@phosphor-icons/react"
+import { verbose, setVerbose } from './constants'
+import { useVerbose } from './hooks/useVerbose'
 
 chaoticOrbit.register()
 
+interface ClipDetails {
+    position: number
+    length: number
+    type: string
+    method: string
+    // Add any other details you want to display
+}
+
 export default function App() {
-  const [verbose, setVerbose] = useState<boolean>(true);
   const [controlFile, setControlFile] = useState<File | null>(null);
   const [revisedFile, setRevisedFile] = useState<File | null>(null);
   const [results, setResults] = useState<number[] | null>(null);
@@ -44,6 +53,10 @@ export default function App() {
   const [showTimeline, setShowTimeline] = useState(false)
   const [isScrollable, setIsScrollable] = useState(true)
   const [isFullWidth, setIsFullWidth] = useState(false)
+  const [activeClipDetails, setActiveClipDetails] = useState<ClipDetails | null>(null)
+  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null)
+  const lastPosition = useRef<number | null>(null)
+  const [isVerbose, setVerbose] = useVerbose(true)
 
   useEffect(() => {
     if (resultsContainerRef.current) {
@@ -107,16 +120,9 @@ export default function App() {
       setIsLoading(true)
       setShowTimeline(false)
 
-      const { 
-        changedPositions, 
-        controlClips, 
-        revisedClips, 
-        changes,
-        overlappingClips 
-      } = await detectChanges(
-        controlInput, 
-        revisedInput, 
-        verbose, 
+      const result = await detectChanges(
+        controlInput,
+        revisedInput,
         {
           detectOverlaps: detectOverlapsEnabled,
           detectPositions: detectPositionsEnabled,
@@ -132,11 +138,11 @@ export default function App() {
       const totalDuration = Math.max(loadingDuration, minimumDuration)
       
       // Set the state
-      setControlClips(controlClips)
-      setRevisedClips(revisedClips)
-      setResults(changedPositions)
-      setChanges(changes)
-      setOverlappingClips(overlappingClips)
+      setControlClips(result.controlClips)
+      setRevisedClips(result.revisedClips)
+      setResults(result.changedPositions)
+      setChanges(result.changes)
+      setOverlappingClips(result.overlappingClips)
       setIsCompared(true)
 
       // First, start the fade out of the loader
@@ -222,6 +228,89 @@ export default function App() {
     }
   }, [testMode]);
 
+  function scrollToResult(position: number | null, forceScroll: boolean = false) {
+    if (position === null) return
+
+    const resultsList = document.querySelector('.results-list-content')
+    const resultItem = document.querySelector(`.result-item[data-position="${position.toFixed(2)}"]`)
+    
+    if (resultsList && resultItem) {
+        const listRect = resultsList.getBoundingClientRect()
+        const itemRect = (resultItem as HTMLElement).getBoundingClientRect()
+        
+        // Calculate the item's position relative to the viewport
+        const itemRelativeTop = itemRect.top - listRect.top
+        
+        // Check if item is already visible in the viewport
+        const isVisible = (
+            itemRelativeTop >= 0 &&
+            itemRelativeTop <= listRect.height
+        )
+        
+        // Scroll if forced or if item isn't visible
+        if (forceScroll || !isVisible) {
+            const scrollPosition = Math.max(
+                0,
+                Math.min(
+                    resultsList.scrollTop + itemRelativeTop - 8,
+                    resultsList.scrollHeight - listRect.height
+                )
+            )
+
+            resultsList.scrollTo({
+                top: scrollPosition,
+                behavior: 'smooth'
+            })
+        }
+    }
+  }
+
+  const handleClipHover = useCallback((position: number | null, change?: Change, shouldScroll: boolean = false) => {
+    //console.log('Timeline hover:', position, 'Last position:', lastPosition.current, 'Should scroll:', shouldScroll)
+        
+    // Clear any existing timeout
+    if (hoverTimeout) {
+        clearTimeout(hoverTimeout)
+        setHoverTimeout(null)
+    }
+
+    if (position !== null && change) {
+        // Immediate update for hover on
+        lastPosition.current = position
+        setHoveredPosition(position)
+        setActiveClipDetails({
+            position: change.revisedPosition,
+            length: change.revisedLength || 0,
+            type: change.type,
+            method: change.detectionMethod
+        })
+        // Force scroll for timeline hovers, check visibility for list hovers
+        scrollToResult(position, !shouldScroll)
+    } else if (position === null && lastPosition.current !== null) {
+        // Start timeout only if we had a previous position
+        const timeout = setTimeout(() => {
+            // Only clear if we haven't moved to a new position
+            if (hoveredPosition === lastPosition.current) {
+                console.log('Timeout triggered - clearing details')
+                lastPosition.current = null
+                setHoveredPosition(null)
+                setActiveClipDetails(null)
+            }
+        }, 200)
+        setHoverTimeout(timeout)
+    }
+  }, [hoverTimeout, hoveredPosition])
+
+  useEffect(() => {
+    return () => {
+        if (hoverTimeout) clearTimeout(hoverTimeout)
+    }
+  }, [hoverTimeout])
+
+  const addedCount = changes.filter(change => change.type === 'added').length
+  const deletedCount = changes.filter(change => change.type === 'deleted').length
+  const changedCount = changes.filter(change => change.type === 'changed').length
+
   return (
     <div className={`app-container ${isFullWidth ? 'full-width' : ''}`}>
         <div className="top-banner">
@@ -240,7 +329,7 @@ export default function App() {
                     <FormControlLabel
                         control={
                             <Switch
-                                checked={verbose}
+                                checked={isVerbose}
                                 onChange={(e) => setVerbose(e.target.checked)}
                                 color="primary"
                             />
@@ -408,130 +497,163 @@ export default function App() {
                                 changes={changes}
                                 hoveredPosition={hoveredPosition}
                                 overlappingClips={overlappingClips}
-                                onHover={setHoveredPosition}
+                                onHover={(position) => {
+                                    const change = changes.find(c => c.revisedPosition === position)
+                                    handleClipHover(position, change, false)
+                                }}
+                                showTooltip={false}
                             />
                         ) : (
                             <p>Loading timeline...</p>
                         )}
-                        {results.length > 0 && (() => {
-                            const addedCount = changes.filter(c => c.type === 'added').length
-                            const deletedCount = changes.filter(c => c.type === 'deleted').length
-                            const changedCount = changes.filter(c => c.type === 'changed').length
-
-                            return (
-                                <>
-                                    <div className="results-list-header">
-                                        {/*<p>Found {changes.length} change{changes.length !== 1 ? 's' : ''}:</p>*/}
-                                        <p>&nbsp;</p>
-                                        {changes.length > 10 && (
-                                            <FormControlLabel
-                                                control={
-                                                    <Switch
-                                                        checked={isScrollable}
-                                                        onChange={(e) => setIsScrollable(e.target.checked)}
-                                                        size="small"
-                                                        color="default"
-                                                    />
-                                                }
-                                                label="Scrollable list"
-                                            />
+                        {results.length > 0 && (
+                            <div className="results-content-wrapper">
+                                <div className="results-stats bordered">
+                                    {(() => {
+                                        const controlDuration = calculateTotalDuration(controlClips)
+                                        const revisedDuration = calculateTotalDuration(revisedClips)
+                                        const durationChange = revisedDuration - controlDuration
+                                        const percentageChange = ((revisedDuration - controlDuration) / controlDuration * 100).toFixed(1)
+                                        const isPositive = durationChange >= 0
+                                        
+                                        return (
+                                            <div className="duration-change">
+                                                <ClockCountdown size={48} alt="Duration" />
+                                                <p className={`duration-value ${
+                                                    durationChange === 0 ? 'unchanged' : 
+                                                    durationChange > 0 ? 'positive' : 
+                                                    'negative'
+                                                }`}>
+                                                    {formatDuration(revisedDuration)}</p>
+                                                <p>
+                                                    <span className={`duration-value percentage ${
+                                                        durationChange === 0 ? 'unchanged' : 
+                                                        durationChange > 0 ? 'positive' : 
+                                                        'negative'
+                                                    }`}>
+                                                        {durationChange === 0 ? '(unchanged)' : (
+                                                            <>
+                                                                <span className="duration-change-time">
+                                                                    {`${durationChange > 0 ? '+' : '-'}${formatDuration(durationChange)}`}
+                                                                </span>
+                                                                <span className="duration-change-percent">
+                                                                    {`(${percentageChange}%)`}
+                                                                </span>
+                                                            </>
+                                                        )}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                        )
+                                    })()}
+                                </div>
+                                <div className="results-data bordered">
+                                    <div className="stat-row">
+                                        <div className="stat-group">
+                                            <Sparkle size={48} alt="Added" />
+                                            <p className={`duration-value ${addedCount > 0 ? 'positive' : ''}`}>
+                                                {addedCount}
+                                            </p>
+                                        </div>
+                                        <div className="stat-group">
+                                            <Backspace size={48} alt="Deleted" />
+                                            <p className={`duration-value ${deletedCount > 0 ? 'negative' : ''}`}>
+                                                {deletedCount}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="stat-row">
+                                        <div className="stat-group">
+                                            <ArrowsLeftRight size={48} alt="Modified" />
+                                            <p className={`duration-value ${changedCount > 0 ? 'unchanged' : ''}`}>
+                                                {changedCount}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="results-list-details bordered"
+                                     onMouseEnter={() => {
+                                         // Clear any pending timeout when entering the details panel
+                                         if (hoverTimeout) {
+                                             clearTimeout(hoverTimeout)
+                                             setHoverTimeout(null)
+                                         }
+                                     }}
+                                     onMouseLeave={() => {
+                                         // Start the timeout when leaving the details panel
+                                         const timeout = setTimeout(() => {
+                                             setHoveredPosition(null)
+                                             setActiveClipDetails(null)
+                                         }, 200)
+                                         setHoverTimeout(timeout)
+                                     }}
+                                >
+                                    <h4>Clip Details</h4>
+                                    <div className={`details-content ${activeClipDetails ? '' : 'transitioning'}`}>
+                                        {activeClipDetails ? (
+                                            <>
+                                                <div className="details-row">
+                                                    <div className="details-label">Position</div>
+                                                    <div className="details-value">
+                                                        {formatDuration(activeClipDetails.position)}
+                                                    </div>
+                                                </div>
+                                                <div className="details-row">
+                                                    <div className="details-label">Length</div>
+                                                    <div className="details-value">
+                                                        {formatDuration(activeClipDetails.length)}
+                                                    </div>
+                                                </div>
+                                                <div className="details-row">
+                                                    <div className="details-label">Change Type</div>
+                                                    <div className="details-value">
+                                                        {activeClipDetails.type.charAt(0).toUpperCase() + 
+                                                         activeClipDetails.type.slice(1)}
+                                                    </div>
+                                                </div>
+                                                <div className="details-row">
+                                                    <div className="details-label">Detection Method</div>
+                                                    <div className="details-value">
+                                                        {activeClipDetails.method.charAt(0).toUpperCase() + 
+                                                         activeClipDetails.method.slice(1)}
+                                                    </div>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="details-empty">
+                                                <p>&nbsp;</p>
+                                            </div>
                                         )}
                                     </div>
-                                    <div className="results-content-wrapper">
-                                        <div className="results-stats bordered">
-                                            {(() => {
-                                                const controlDuration = calculateTotalDuration(controlClips)
-                                                const revisedDuration = calculateTotalDuration(revisedClips)
-                                                const durationChange = revisedDuration - controlDuration
-                                                const percentageChange = ((revisedDuration - controlDuration) / controlDuration * 100).toFixed(1)
-                                                const isPositive = durationChange >= 0
-                                                
-                                                return (
-                                                    <div className="duration-change">
-                                                        <ClockCountdown size={48} alt="Duration" />
-                                                        <p className={`duration-value ${
-                                                            durationChange === 0 ? 'unchanged' : 
-                                                            durationChange > 0 ? 'positive' : 
-                                                            'negative'
-                                                        }`}>
-                                                            {formatDuration(revisedDuration)}</p>
-                                                        <p>
-                                                            <span className={`duration-value percentage ${
-                                                                durationChange === 0 ? 'unchanged' : 
-                                                                durationChange > 0 ? 'positive' : 
-                                                                'negative'
-                                                            }`}>
-                                                                {durationChange === 0 ? '(unchanged)' : (
-                                                                    <>
-                                                                        <span className="duration-change-time">
-                                                                            {`${durationChange > 0 ? '+' : '-'}${formatDuration(durationChange)}`}
-                                                                        </span>
-                                                                        <span className="duration-change-percent">
-                                                                            {`(${percentageChange}%)`}
-                                                                        </span>
-                                                                    </>
-                                                                )}
-                                                            </span>
-                                                        </p>
-                                                    </div>
-                                                )
-                                            })()}
-                                        </div>
-                                        <div className="results-data bordered">
-                                            <div className="stat-row">
-                                                <div className="stat-group">
-                                                    <Sparkle size={48} alt="Added" />
-                                                    <p className={`duration-value ${addedCount > 0 ? 'positive' : ''}`}>
-                                                        {addedCount}
-                                                    </p>
-                                                </div>
-                                                <div className="stat-group">
-                                                    <Backspace size={48} alt="Deleted" />
-                                                    <p className={`duration-value ${deletedCount > 0 ? 'negative' : ''}`}>
-                                                        {deletedCount}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="stat-row">
-                                                <div className="stat-group">
-                                                    <ArrowsLeftRight size={48} alt="Modified" />
-                                                    <p className={`duration-value ${changedCount > 0 ? 'unchanged' : ''}`}>
-                                                        {changedCount}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="results-list-details bordered">
-                                            <h4>Clip Details</h4>
-                                        </div>
-                                        <div className="results-list bordered">
-                                            <div className={`results-list-content ${isScrollable && changes.length > 10 ? 'scrollable' : ''}`}>
-                                                <ul>
-                                                    {changes
-                                                        .sort((a, b) => a.revisedPosition - b.revisedPosition)
-                                                        .map((change, index) => {
-                                                            const changeDescription = (() => {
-                                                                const position = change.revisedPosition.toFixed(2)
-                                                                const method = change.detectionMethod.charAt(0).toUpperCase() + 
-                                                                    change.detectionMethod.slice(1)
-                                                                
-                                                                switch (change.type) {
-                                                                    case 'added':
-                                                                        return `Added clip at ${position} (${method})`
-                                                                    case 'deleted':
-                                                                        return `Deleted clip at ${position} (${method})`
-                                                                    case 'changed':
-                                                                        if (change.detectionMethod === 'fingerprint')
-                                                                            return `Clip moved to ${position} (${method})`
-                                                                        if (change.detectionMethod === 'position')
-                                                                            return `Clip position changed to ${position} (${method})`
-                                                                        if (change.detectionMethod === 'length')
-                                                                            return `Clip length changed at ${position} (${method})`
-                                                                        return `Modified clip at ${position} (${method})`
-                                                                    default:
-                                                                        return `Unknown change at ${position} (${method})`
-                                                                }
-                                                            })()
+                                </div>
+                                <div className="results-list bordered">
+                                    <div className={`results-list-content ${isScrollable && changes.length > 10 ? 'scrollable' : ''}`}>
+                                        <ul>
+                                            {changes
+                                                .sort((a, b) => a.revisedPosition - b.revisedPosition)
+                                                .map((change, index) => {
+                                                    const changeDescription = (() => {
+                                                        const position = change.revisedPosition.toFixed(2)
+                                                        const method = change.detectionMethod.charAt(0).toUpperCase() + 
+                                                            change.detectionMethod.slice(1)
+                                                        
+                                                        switch (change.type) {
+                                                            case 'added':
+                                                                return `Added clip at ${position} (${method})`
+                                                            case 'deleted':
+                                                                return `Deleted clip at ${position} (${method})`
+                                                            case 'changed':
+                                                                if (change.detectionMethod === 'fingerprint')
+                                                                    return `Clip moved to ${position} (${method})`
+                                                                if (change.detectionMethod === 'position')
+                                                                    return `Clip position changed to ${position} (${method})`
+                                                                if (change.detectionMethod === 'length')
+                                                                    return `Clip length changed at ${position} (${method})`
+                                                                return `Modified clip at ${position} (${method})`
+                                                            default:
+                                                                return `Unknown change at ${position} (${method})`
+                                                        }
+                                                    })()
 
                                                             const IconComponent = (() => {
                                                                 switch (change.type) {
@@ -546,39 +668,28 @@ export default function App() {
                                                                 }
                                                             })()
 
-                                                            return (
-                                                                <li 
-                                                                    key={index}
-                                                                    onMouseEnter={() => {
-                                                                      /*  
-                                                                      console.log('Results list item hover enter:', {
-                                                                            position: change.revisedPosition
-                                                                        })
-                                                                        */
-                                                                        setHoveredPosition(change.revisedPosition)
-                                                                    }}
-                                                                    onMouseLeave={() => {
-                                                                        //console.log('Results list item hover leave')
-                                                                        setHoveredPosition(null)
-                                                                    }}
-                                                                    className={`result-item ${change.type}${
-                                                                        hoveredPosition === change.revisedPosition ? ' hovered' : ''
-                                                                    }`}
-                                                                >
-                                                                    <div className="icon-wrapper">
-                                                                        <IconComponent size={18} weight="light" />
-                                                                    </div>
-                                                                    {changeDescription}
-                                                                </li>
-                                                            )
-                                                        })}
-                                                </ul>
-                                            </div>
-                                        </div>
+                                                    return (
+                                                        <li 
+                                                            key={index}
+                                                            data-position={change.revisedPosition.toFixed(2)}
+                                                            onMouseEnter={() => handleClipHover(change.revisedPosition, change, true)}
+                                                            onMouseLeave={() => handleClipHover(null)}
+                                                            className={`result-item ${change.type}${
+                                                                hoveredPosition === change.revisedPosition ? ' hovered' : ''
+                                                            }`}
+                                                        >
+                                                            <div className="icon-wrapper">
+                                                                <IconComponent size={18} weight="light" />
+                                                            </div>
+                                                            {changeDescription}
+                                                        </li>
+                                                    )
+                                                })}
+                                        </ul>
                                     </div>
-                                </>
-                            )
-                        })()}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

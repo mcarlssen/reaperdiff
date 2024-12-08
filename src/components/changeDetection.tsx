@@ -1,4 +1,4 @@
-import { TOLERANCE } from '../constants'
+import { TOLERANCE, verbose } from '../constants'
 import { Clip, Change } from '../types'
 
 export async function parseRppFile(file: File, verbose: boolean): Promise<Clip[]> {
@@ -57,8 +57,7 @@ function detectOverlaps(clips: Clip[]): number[] {
 
 export async function detectChanges(
   controlFile: File, 
-  revisedFile: File, 
-  verbose: boolean
+  revisedFile: File
 ): Promise<{
   changedPositions: number[],
   controlClips: Clip[],

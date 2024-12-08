@@ -1,5 +1,5 @@
 import { Clip, Change } from '../types'
-import { TOLERANCE } from '../constants'
+import { TOLERANCE, verbose } from '../constants'
 
 interface MovedClipResult {
   movedClips: Map<number, Change>
@@ -112,13 +112,13 @@ export function detectMovedClips(
     }
   }
 
-  /*
-  console.log('Finished detectMovedClips:', {
-    movedClips: movedClips.size,
-    silentGaps: silentGaps.size,
-    revisedClips: revisedClips.length
-  })
-  */
+  if (verbose) {
+    console.log('Finished detectMovedClips:', {
+      movedClips: movedClips.size,
+      silentGaps: silentGaps.size,
+      revisedClips: revisedClips.length
+    })
+  }
 
   return { movedClips, silentGaps }
 } 

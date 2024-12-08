@@ -16,12 +16,14 @@ export function detectOverlaps(clips: Clip[]): number[] {
   // Sort by position
   uniqueClips.sort((a, b) => a.POSITION - b.POSITION)
   
+  /*
   console.log('Checking overlaps for unique clips (excluding deleted):', 
     uniqueClips.map(c => ({
       start: c.POSITION,
       end: c.POSITION + c.LENGTH
     }))
   )
+  */
   
   for (let i = 0; i < uniqueClips.length - 1; i++) {
     const currentClip = uniqueClips[i]

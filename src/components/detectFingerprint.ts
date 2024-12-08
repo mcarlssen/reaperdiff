@@ -1,5 +1,5 @@
 import { Clip, ClipFingerprint } from '../types';
-import { TOLERANCE } from '../constants'
+import { TOLERANCE, verbose } from '../constants'
 
 // Calculate decimal places based on TOLERANCE
 const DECIMAL_PLACES = Math.abs(Math.floor(Math.log10(TOLERANCE)));
@@ -61,7 +61,7 @@ export function compareClips(
   const offsetDiff = Math.abs(roundToTolerance(controlFingerprint.controlOffset!) - roundToTolerance(revisedFingerprint.revisedOffset!))
   const fileChanged = controlClip.FILE !== revisedClip.FILE
   
-  if (fileChanged) {
+  if (verbose && fileChanged) {
     console.log('File change detected:', {
       position: revisedClip.POSITION,
       oldFile: controlClip.FILE,

@@ -6,7 +6,7 @@ import { detectLengthChanges } from './detectLengthChanges';
 import { detectAddedClips } from './detectAddedClips';
 import { detectDeletedClips } from './detectDeletedClips';
 import { detectMovedClips } from './detectMovedClips';
-import { ignoreMute, TOLERANCE } from '../constants'
+import { ignoreMute, TOLERANCE, verbose } from '../constants'
 import { detectSplitClips } from './detectSplitClips'
 
 interface DetectionResult {
@@ -20,11 +20,10 @@ interface DetectionResult {
 export async function detectChanges(
   controlFile: File | string,
   revisedFile: File | string,
-  verbose: boolean,
   options: DetectionOptions
 ): Promise<DetectionResult> {
-  let controlClips = await parseRppFile(controlFile, verbose)
-  let revisedClips = await parseRppFile(revisedFile, verbose)
+  let controlClips = await parseRppFile(controlFile, 'control file')
+  let revisedClips = await parseRppFile(revisedFile, 'revised file')
 
   // Filter out muted clips if ignoreMute is enabled
   if (ignoreMute) {

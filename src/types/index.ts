@@ -14,6 +14,7 @@ export interface Change {
   controlPosition?: number;
   controlLength?: number;
   controlOffset?: number;
+  revisedLength?: number;
   detectionMethod: 'overlap' | 'fingerprint' | 'position' | 'length' | 'addsdeletes' | 'offset' | 'moved' | 'silence' | 'split' | 'file';
 }
 

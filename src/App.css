@@ -123,11 +123,11 @@ body::after {
 
 .app-container {
     display: grid;
-    grid-template-rows: 100px 1fr 40px;
+    grid-template-rows: 110px 1fr 40px;
     min-height: 880px;
-    width: min(1300px, calc(100% - 0px));
+    width: min(1080px, calc(100% - 0px));
     margin: 0 auto;
-    padding:10px;
+    padding: 10px;
     overflow: hidden;
     transition: width 0.5s ease-in-out;
 }
@@ -146,12 +146,12 @@ body::after {
 
 .top-banner {
     display: grid;
-    grid-template-columns: 84% 14.25%;
+    grid-template-columns: 81% 17.25%;
     gap: 20px;
     align-items: start;
-    padding: 0;
     border-radius: 15px;
     width: calc(100% - 40px);
+    padding: 0;
     max-width: inherit;
     margin: 10px auto 0;
 }
@@ -429,6 +429,7 @@ body::after {
 .results-list-content.scrollable {
   max-height: 300px;
   overflow-y: auto;
+  scroll-behavior: smooth;  /* Enable smooth scrolling */
 }
 
 .results-list-content.scrollable:hover {
@@ -577,7 +578,8 @@ body::after {
 
 .result-item {
     cursor: pointer;
-    transition: color 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);  /* iOS-like easing */
+    transform-origin: center left;  /* Scale from left edge */
     margin: 4px 0;
     border-radius: 10px;  
 }
@@ -617,6 +619,7 @@ body::after {
 
 /* Add styles for hovered state of result items */
 .result-item.hovered {
+  transform: scale(1.01, 1.07);
   color: var(--text-accent-color);
   filter: brightness(1.5);
 }
@@ -902,7 +905,7 @@ body::after {
 */
 
 .results-data .duration-value {
-  font-size: 40px;
+  font-size: 36px;
   font-weight: bold;
   padding: 10px 0;
 }
@@ -926,36 +929,29 @@ body::after {
     width: 100%;
 }
 
-/*
-.duration-change h4 {
-    width: 100%;
-    text-align: center;
-}
-*/
-
 .duration-value.percentage .duration-change-time {
     font-size: 24px;  /* 4px larger than base */
     filter: brightness(1);
-
 }
 
 .duration-value.percentage .duration-change-percent {
     font-size: 16px;
     font-style: italic;
     filter: brightness(.8);
-
 }
 
+/*
 .results-stats .duration-change h4 {
     font-size: 20px;
     text-transform: uppercase;
     color: var(--text-color);
     opacity: 0.8;
     padding-bottom: 15px;
-    width: 100%;  /* Header takes full width */
+    width: 100%;
     margin-bottom: 8px;
     text-align: center;
 }
+*/
 
 .results-stats p, .results-data p {
   padding:5px 0;
@@ -1031,5 +1027,49 @@ body::after {
     border-radius: 8px;
     padding: 20px;
     height: fit-content;
+    position: relative;
+}
+
+.details-content {
+    opacity: 1;
+    transition: opacity 0.2s ease-out;
+}
+
+.details-content.transitioning {
+    opacity: 0;
+}
+
+.details-row {
+    margin-bottom: 12px;
+}
+
+.details-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: 4px;
+    margin-right:5px;
+    position: relative;  /* For positioning the arrow */
+}
+
+.details-value {
+    font-size: 14px;
+    color: var(--text-color);
+}
+
+/* Create the arrow */
+.results-list-details::after {
+    content: '';
+    position: absolute;
+    right: -12px;  /* Position arrow outside the div */
+    top: 5px;     /* Adjust this to align with first list item */
+    width: 26px;
+    height: 26px;
+    border-radius: 3px;
+    border-top: 1px solid var(--border-color-light);
+    border-right: 1px solid var(--border-color-light);
+    background-color: color-mix(in srgb, var(--tertiary-bg) 100%, transparent);
+    filter: brightness(1.1);
+    transform: rotate(45deg);   /* Rotate to create arrow shape */
 }
 

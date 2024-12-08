@@ -1,14 +1,12 @@
 import { parseRppFile } from './parseRppFile';
 import { Clip } from '../types';
 
-export async function parseRppInput(input: File | string, verbose: boolean): Promise<Clip[]> {
-  let content: string;
-
-  if (typeof input === 'string') {
-    content = input;
-  } else {
-    content = await input.text();
+export async function parseRppInput(
+  content: string
+): Promise<Clip[]> {
+  if (!content) {
+    throw new Error('No content provided')
   }
 
-  return parseRppFile(content, verbose);
+  return parseRppFile(content, 'test data')
 } 

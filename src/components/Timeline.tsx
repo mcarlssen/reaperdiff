@@ -13,6 +13,7 @@ interface TimelineProps {
   hoveredPosition: number | null;
   overlappingClips: number[];
   onHover?: (position: number | null) => void;
+  showTooltip?: boolean;
 }
 
 const legendItems = [
@@ -45,7 +46,8 @@ export const Timeline: React.FC<TimelineProps> = ({
   changes,
   hoveredPosition,
   overlappingClips,
-  onHover
+  onHover,
+  showTooltip
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -130,8 +132,12 @@ export const Timeline: React.FC<TimelineProps> = ({
       .attr('y', d => yOffset + getClipYOffset(d))
       .attr('width', d => xScale(d.POSITION + d.LENGTH) - xScale(d.POSITION) - clipSpacing)
       .attr('height', clipHeight)
-      .append('title')
-      .text(d => generateTooltip(d, changes))
+      .call(selection => {
+        if (showTooltip !== false) {  // Default to showing if not explicitly disabled
+          selection.append('title')
+            .text(d => generateTooltip(d, changes))
+        }
+      })
 
     clipGroup.selectAll('rect')
       .on('mouseenter.timeline', function(event, d: any) {
