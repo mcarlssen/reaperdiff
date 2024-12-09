@@ -61,7 +61,7 @@
 }
 
 .legend-border {
-  fill: var(--secondary-bg);
+  fill: color-mix(in srgb, var(--secondary-bg) 50%, transparent);
   stroke: var(--primary-bg);
   stroke-width: 1px;
 }
@@ -97,3 +97,18 @@
     fill: #ff4444;
 } 
 */
+
+.timeline-legend {
+  transform: translate(${width - 380}, -25);  /* Adjusted for larger icons */
+}
+
+.legend-item {
+  transform: (d, i) => `translate(${10 + i * 75}, 7)`;  /* Adjusted spacing */
+}
+
+.results-container foreignObject svg{
+  background:none;
+  margin: 0px;
+  padding: 0px;
+  filter:brightness(1.5);
+}

@@ -1,9 +1,13 @@
+import React from 'react';
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import './Timeline.css';
 import { Clip, Change } from '../types';
 import { generateTooltip } from './helpers/generateTooltip'
 import { TOLERANCE } from '../constants'
+import { Sparkle, Backspace, ArrowsLeftRight, CirclesThree, ClockCountdown, SpeakerSimpleX } from "@phosphor-icons/react"
+import { changeIcons } from '../constants/icons'
+import { createRoot } from 'react-dom/client'
 
 interface TimelineProps {
   revisedClips: Clip[];
@@ -16,13 +20,7 @@ interface TimelineProps {
   showTooltip?: boolean;
 }
 
-const legendItems = [
-  { label: 'Added', class: 'added' },
-  { label: 'Deleted', class: 'deleted' },
-  { label: 'Modified', class: 'modified' },
-  { label: 'Static', class: 'unchanged' },
-  { label: 'Silence', class: 'silence' }
-]
+const legendItems = Object.values(changeIcons)
 
 const getClipColor = (clip: Clip, changes: Change[]): string => {
   const change = changes.find((c: Change) => Math.abs(c.revisedPosition - clip.POSITION) < TOLERANCE)
@@ -160,7 +158,7 @@ export const Timeline: React.FC<TimelineProps> = ({
     // Add header group with label and legend
     const headerGroup = svg.append('g')
       .attr('class', 'timeline-header')
-      .attr('transform', `translate(0, ${yOffset - 40})`) // controls both the label and legend
+      .attr('transform', `translate(0, ${yOffset - 45})`) // controls both the label and legend
 
     // Add "Revised" label
     headerGroup.append('text')
@@ -171,13 +169,13 @@ export const Timeline: React.FC<TimelineProps> = ({
     // Add legend group
     const legend = headerGroup.append('g')
       .attr('class', 'timeline-legend')
-      .attr('transform', `translate(${width - 360}, -25)`) // controls the legend position
+      .attr('transform', `translate(${width - 420}, -25)`) // controls the legend position
 
     // Add legend border
     legend.append('rect')
       .attr('class', 'legend-border')
-      .attr('width', 360)
-      .attr('height', 30)
+      .attr('width', 440)
+      .attr('height', 45)
       .attr('rx', 4)
 
     // Add legend items
@@ -186,17 +184,41 @@ export const Timeline: React.FC<TimelineProps> = ({
       .enter()
       .append('g')
       .attr('class', 'legend-item')
-      .attr('transform', (d, i) => `translate(${10 + i * 70}, 7)`)
+      .attr('transform', (d, i) => `translate(${10 + i * 85}, 7)`)
 
     legendItem.append('rect')
       .attr('class', d => `timeline-clip ${d.class}`)
-      .attr('width', 15)
-      .attr('height', 15)
+      .attr('width', 30)
+      .attr('height', 30)
       .attr('rx', 2)
 
+    // Add foreignObject for icons
+    legendItem.append('foreignObject')
+      .attr('width', 20)
+      .attr('height', 20)
+      .attr('x', 5)
+      .attr('y', 5)
+      .append('xhtml:div')
+      .style('width', '100%')
+      .style('height', '100%')
+      .style('display', 'flex')
+      .style('align-items', 'center')
+      .style('justify-content', 'center')
+      .each(function(d) {
+        const Icon = d.icon
+        const iconElement = <Icon 
+          size={46}
+          color={d.color}
+          weight="bold"
+        />
+        // Create root and render using modern React
+        const root = createRoot(this as HTMLElement)
+        root.render(iconElement)
+      })
+
     legendItem.append('text')
-      .attr('x', 20)
-      .attr('y', 12)
+      .attr('x', 35)
+      .attr('y', 18)
       .attr('class', 'legend-text')
       .text(d => d.label)
 
