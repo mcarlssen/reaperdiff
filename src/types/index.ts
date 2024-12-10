@@ -18,6 +18,14 @@ export interface Change {
   detectionMethod: 'overlap' | 'fingerprint' | 'position' | 'length' | 'addsdeletes' | 'offset' | 'moved' | 'silence' | 'split' | 'file';
 }
 
+export interface ClipDetails {
+  position: number;
+  length: number;
+  type: Change['type'];
+  method: Change['detectionMethod'];
+  explanation: string;
+}
+
 export interface ClipFingerprint {
   revisedLength?: number;
   revisedOffset?: number;

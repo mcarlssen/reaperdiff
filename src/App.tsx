@@ -1,29 +1,21 @@
-import React from 'react'
-import { useCallback, useState, useRef, useEffect } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { FontAwesomeIcon } from './fontawesome';
-import { Switch, FormControlLabel, Tooltip, Radio, RadioGroup } from '@mui/material';
-import './App.css';
-import { Timeline } from './components/Timeline';
-import { detectChanges } from './components';
-import { Clip, Change, DetectionOptions } from './types';
-import { generateAlgorithmTooltip } from './components/helpers/generateAlgorithmTooltip';
-import { testDatasets, getDatasetById } from './testData/index';
-import { chaoticOrbit } from 'ldrs'
+import React, { useState, useCallback, useRef, useEffect } from 'react'
+import { useDropzone } from 'react-dropzone'
+import { Switch, FormControlLabel, Radio, RadioGroup, Tooltip } from '@mui/material'
+import { Timeline } from './components/Timeline'
+import { Clip, Change, DetectionOptions, ClipDetails } from './types'
 import { calculateTotalDuration, formatDuration } from './utils/duration'
+import { generateChangeExplanation, getMethodName } from './utils/changeExplanation'
+import { FontAwesomeIcon } from './fontawesome'
+import './App.css'
+import { detectChanges } from './components'
+import { generateAlgorithmTooltip } from './components/helpers/generateAlgorithmTooltip'
+import { testDatasets, getDatasetById } from './testData/index'
+import { chaoticOrbit } from 'ldrs'
 import { ClockCountdown } from "@phosphor-icons/react"
 import { useVerbose } from './hooks/useVerbose'
 import { changeIcons } from './constants/icons'
 
 chaoticOrbit.register()
-
-interface ClipDetails {
-    position: number
-    length: number
-    type: string
-    method: string
-    // Add any other details you want to display
-}
 
 export default function App() {
   const [controlFile, setControlFile] = useState<File | null>(null);
@@ -261,9 +253,6 @@ export default function App() {
   }
 
   const handleClipHover = useCallback((position: number | null, change?: Change, shouldScroll: boolean = false) => {
-    //console.log('Timeline hover:', position, 'Last position:', lastPosition.current, 'Should scroll:', shouldScroll)
-        
-    // Clear any existing timeout
     if (hoverTimeout) {
         clearTimeout(hoverTimeout)
         setHoverTimeout(null)
@@ -272,15 +261,20 @@ export default function App() {
     if (position !== null && change) {
         // Find the actual clip that corresponds to this change
         const clip = revisedClips.find(c => Math.abs(c.POSITION - change.revisedPosition) < 0.001)
+        // Find the control clip if it exists
+        const controlClip = change.controlPosition !== undefined ? 
+            controlClips.find(c => Math.abs(c.POSITION - change.controlPosition!) < 0.001) : 
+            undefined
         
         // Immediate update for hover on
         lastPosition.current = position
         setHoveredPosition(position)
         setActiveClipDetails({
             position: change.revisedPosition,
-            length: clip?.LENGTH || 0, // Use the actual clip length
+            length: clip?.LENGTH || 0,
             type: change.type,
-            method: change.detectionMethod
+            method: change.detectionMethod,
+            explanation: generateChangeExplanation(change, controlClip, clip)
         })
         // Force scroll for timeline hovers, check visibility for list hovers
         scrollToResult(position, !shouldScroll)
@@ -297,7 +291,7 @@ export default function App() {
         }, 200)
         setHoverTimeout(timeout)
     }
-  }, [hoverTimeout, hoveredPosition, revisedClips])
+  }, [hoverTimeout, hoveredPosition, revisedClips, controlClips])
 
   useEffect(() => {
     return () => {
@@ -382,7 +376,7 @@ export default function App() {
                     <RadioGroup 
                       className="dataset-selector"
                       value={selectedDatasetId}
-                      onChange={(e) => {
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         setSelectedDatasetId(e.target.value)
                         setIsCompared(false)
                       }}
@@ -616,34 +610,44 @@ export default function App() {
                                      setHoverTimeout(timeout)
                                  }}
                             >
-                                <h4>Clip Details</h4>
+                                {/* <h4>Clip Details</h4> */}
                                 <div className={`details-content ${activeClipDetails ? '' : 'transitioning'}`}>
                                     {activeClipDetails ? (
                                         <>
-                                            <div className="details-row">
-                                                <div className="details-label">Position</div>
-                                                <div className="details-value">
-                                                    {formatDuration(activeClipDetails.position)}
+                                            <div className="details-row metrics">
+                                                <div className="metric-column">
+                                                    <div className="details-label">Position</div>
+                                                    <div className="details-value">
+                                                        {formatDuration(activeClipDetails.position)}
+                                                    </div>
+                                                </div>
+                                                <div className="metric-column">
+                                                    <div className="details-label">Length</div>
+                                                    <div className="details-value">
+                                                        {formatDuration(activeClipDetails.length)}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="details-row">
-                                                <div className="details-label">Length</div>
-                                                <div className="details-value">
-                                                    {formatDuration(activeClipDetails.length)}
-                                                </div>
-                                            </div>
+                                            { /*
                                             <div className="details-row">
                                                 <div className="details-label">Change Type</div>
-                                                <div className="details-value">
-                                                    {activeClipDetails.type.charAt(0).toUpperCase() + 
-                                                     activeClipDetails.type.slice(1)}
+                                                <div className="details-value explanation">
+                                                    {activeClipDetails.explanation}
+                                                </div>
+                                            </div>
+                                            */ }
+                                            <div className="details-row">
+                                                <div className="details-label">Explanation</div>
+                                                <div className="details-value explanation">
+                                                    {activeClipDetails.explanation.split('\n').map((line, i) => (
+                                                        <div key={i} className="explanation-line">{line}</div>
+                                                    ))}
                                                 </div>
                                             </div>
                                             <div className="details-row">
-                                                <div className="details-label">Detection Method</div>
-                                                <div className="details-value">
-                                                    {activeClipDetails.method.charAt(0).toUpperCase() + 
-                                                     activeClipDetails.method.slice(1)}
+                                                <div className="details-label">Algorithm</div>
+                                                <div className="details-value explanation">
+                                                    {getMethodName(activeClipDetails.method)}
                                                 </div>
                                             </div>
                                         </>
@@ -655,7 +659,7 @@ export default function App() {
                                 </div>
                             </div>
 
-                            <div className="results-list bordered">
+                            <div className="results-list">
                                 <div className={`results-list-content ${isScrollable && changes.length > 9 ? 'scrollable' : ''}`}>
                                     <ul>
                                         {changes
@@ -663,24 +667,22 @@ export default function App() {
                                             .map((change, index) => {
                                                 const changeDescription = (() => {
                                                     const position = formatDuration(change.revisedPosition)
-                                                    const method = change.detectionMethod.charAt(0).toUpperCase() + 
-                                                        change.detectionMethod.slice(1)
                                                     
                                                     switch (change.type) {
                                                         case 'added':
-                                                            return `Added clip at ${position} (${method})`
+                                                            return `Added clip at ${position}`
                                                         case 'deleted':
-                                                            return `Deleted clip at ${position} (${method})`
+                                                            return `Deleted clip at ${position}`
                                                         case 'changed':
                                                             if (change.detectionMethod === 'fingerprint')
-                                                                return `Clip moved to ${position} (${method})`
+                                                                return `Clip moved to ${position}`
                                                             if (change.detectionMethod === 'position')
-                                                                return `Clip position changed to ${position} (${method})`
+                                                                return `Clip position changed to ${position}`
                                                             if (change.detectionMethod === 'length')
-                                                                return `Clip length changed at ${position} (${method})`
-                                                            return `Modified clip at ${position} (${method})`
+                                                                return `Clip length changed at ${position}`
+                                                            return `Modified clip at ${position}`
                                                         default:
-                                                            return `Unknown change at ${position} (${method})`
+                                                            return `Unknown change at ${position}`
                                                     }
                                                 })()
 
