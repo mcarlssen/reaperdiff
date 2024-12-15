@@ -14,6 +14,7 @@ import { chaoticOrbit } from 'ldrs'
 import { ClockCountdown } from "@phosphor-icons/react"
 import { useVerbose } from './hooks/useVerbose'
 import { changeIcons } from './constants/icons'
+import { CollapseHeader } from './components/collapse-header'
 
 chaoticOrbit.register()
 
@@ -49,6 +50,9 @@ export default function App() {
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null)
   const lastPosition = useRef<number | null>(null)
   const [isVerbose, setVerbose] = useVerbose(true)
+  const [isControlsCollapsed, setIsControlsCollapsed] = useState(() => {
+    return JSON.parse(localStorage.getItem('isControlsCollapsed') ?? 'false')
+  })
 
   useEffect(() => {
     if (resultsContainerRef.current) {
@@ -303,12 +307,26 @@ export default function App() {
   const deletedCount = changes.filter(change => change.type === 'deleted').length
   const changedCount = changes.filter(change => change.type === 'changed').length
 
+  useEffect(() => {
+    if (results !== null) {
+      setTimeout(() => {
+        setIsControlsCollapsed(true)
+        localStorage.setItem('isControlsCollapsed', 'true')
+      }, 300)
+    }
+  }, [results])
+
+  useEffect(() => {
+    localStorage.setItem('isControlsCollapsed', JSON.stringify(isControlsCollapsed))
+  }, [isControlsCollapsed])
+
   return (
     <div className={`app-container ${isFullWidth ? 'full-width' : ''}`}>
         <div className="top-banner">
             <div className="banner-left bordered">
                 <div className="app-title">
                     <FontAwesomeIcon icon="code-compare" /> reaperdiff.app
+                    <p>Diff-style .RPP Comparison and sanity checker</p>
                 </div>
                 <div className="header-links">
                     <h2>
@@ -358,365 +376,377 @@ export default function App() {
         
         <div className="main-content">
             <div className="container bordered">
-            <h2>Diff-style .RPP Comparison</h2>
-            
-            {showTestMode ? (
-              <div className={`test-mode-indicator ${fadeOutTestMode ? 'fade-out' : ''}`}>
-                <div className="test-mode-content">
-                  <h3>TEST MODE</h3>
-                  {datasetError ? (
-                    <div className="dataset-error bordered">
-                      Error loading datasets: {datasetError}
-                    </div>
-                  ) : testDatasets.length === 0 ? (
-                    <div className="dataset-error bordered">
-                      No test datasets found
-                    </div>
-                  ) : (
-                    <RadioGroup 
-                      className="dataset-selector"
-                      value={selectedDatasetId}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        setSelectedDatasetId(e.target.value)
-                        setIsCompared(false)
-                      }}
-                    >
-                      {testDatasets.map(dataset => (
-                        <Tooltip 
-                          key={dataset.id}
-                          title={dataset.description}
-                          placement="top"
-                          PopperProps={{
-                            modifiers: [{
-                              name: 'offset',
-                                options: {
-                                  offset: [0, -16],
-                                },
-                            }],
-                          }}
-                        >
-                          <FormControlLabel
-                            value={dataset.id}
-                            control={<Radio />}
-                            label={dataset.name}
-                          />
-                        </Tooltip>
-                      ))}
-                    </RadioGroup>
-                  )}
-                </div>
-              </div>
-            ) : showDropzones ? (
-              <div className={`dropzone-container ${fadeOutDropzones ? 'fade-out' : ''}`}>
-                <div 
-                  className={`dropzone ${controlFile ? 'has-file' : ''} ${
-                    testMode ? 'disabled' : ''
-                  }`} 
-                  {...getControlRootProps({ disabled: testMode })}
-                >
-                    <input {...getControlInputProps()} />
-                    {controlFile ? (
-                        <p>Selected: <span className="file-type">{controlFile.name}</span></p>
-                    ) : (
-                        <p>
-                            {isControlDragActive ? (
-                                <>Drop <span className="dropzone-text-emphasis">control</span> file here</>
-                            ) : (
-                                <>Drop <span className="file-type">control</span> .rpp file here, or click to select</>
-                            )}
-                        </p>
+                {(isControlsCollapsed || results !== null) && (
+                    <CollapseHeader 
+                        isCollapsed={isControlsCollapsed}
+                        onToggle={() => {
+                            setIsControlsCollapsed(!isControlsCollapsed)
+                            if (isControlsCollapsed) {
+                                setIsCompared(false)
+                            }
+                        }}
+                    />
+                )}
+
+                <div className={`controls-wrapper ${isControlsCollapsed ? 'collapsed' : ''}`}>
+                    {testMode && (
+                        <div className={`test-mode-indicator ${isCompared ? 'fade-out' : ''}`}>
+                            <div className="test-mode-content">
+                                <h3>TEST MODE</h3>
+                                {datasetError ? (
+                                    <div className="dataset-error bordered">
+                                        Error loading datasets: {datasetError}
+                                    </div>
+                                ) : testDatasets.length === 0 ? (
+                                    <div className="dataset-error bordered">
+                                        No test datasets found
+                                    </div>
+                                ) : (
+                                    <RadioGroup 
+                                        className="dataset-selector"
+                                        value={selectedDatasetId}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                            setSelectedDatasetId(e.target.value)
+                                            setIsCompared(false)
+                                        }}
+                                    >
+                                        {testDatasets.map(dataset => (
+                                            <Tooltip 
+                                                key={dataset.id}
+                                                title={dataset.description}
+                                                placement="top"
+                                                PopperProps={{
+                                                    modifiers: [{
+                                                        name: 'offset',
+                                                        options: {
+                                                            offset: [0, -16],
+                                                        },
+                                                    }],
+                                                }}
+                                            >
+                                                <FormControlLabel
+                                                    value={dataset.id}
+                                                    control={<Radio />}
+                                                    label={dataset.name}
+                                                />
+                                            </Tooltip>
+                                        ))}
+                                    </RadioGroup>
+                                )}
+                            </div>
+                        </div>
                     )}
-                </div>
 
-                <div 
-                  className={`dropzone ${revisedFile ? 'has-file' : ''} ${
-                    testMode ? 'disabled' : ''
-                  }`} 
-                  {...getRevisedRootProps({ disabled: testMode })}
-                >
-                    <input {...getRevisedInputProps()} />
-                    {revisedFile ? (
-                        <p>Selected: <span className="file-type">{revisedFile.name}</span></p>
-                    ) : (
-                        <p>
-                            {isRevisedDragActive ? (
-                                <span className="dropzone-text-emphasis">Drop file here</span>
-                            ) : (
-                                <>Drop <span className="file-type">revised</span> .rpp file here, or click to select</>
-                            )}
-                        </p>
+                    {!testMode && (
+                        <div className={`dropzone-container ${isCompared ? 'fade-out' : ''}`}>
+                            <div 
+                                className={`dropzone ${controlFile ? 'has-file' : ''} ${
+                                    testMode ? 'disabled' : ''
+                                }`} 
+                                {...getControlRootProps({ disabled: testMode })}
+                            >
+                                <input {...getControlInputProps()} />
+                                {controlFile ? (
+                                    <p>Selected: <span className="file-type">{controlFile.name}</span></p>
+                                ) : (
+                                    <p>
+                                        {isControlDragActive ? (
+                                            <>Drop <span className="dropzone-text-emphasis">control</span> file here</>
+                                        ) : (
+                                            <>Drop <span className="file-type">control</span> .rpp file here, or click to select</>
+                                        )}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div 
+                                className={`dropzone ${revisedFile ? 'has-file' : ''} ${
+                                    testMode ? 'disabled' : ''
+                                }`} 
+                                {...getRevisedRootProps({ disabled: testMode })}
+                            >
+                                <input {...getRevisedInputProps()} />
+                                {revisedFile ? (
+                                    <p>Selected: <span className="file-type">{revisedFile.name}</span></p>
+                                ) : (
+                                    <p>
+                                        {isRevisedDragActive ? (
+                                            <span className="dropzone-text-emphasis">Drop file here</span>
+                                        ) : (
+                                            <>Drop <span className="file-type">revised</span> .rpp file here, or click to select</>
+                                        )}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
                     )}
-                </div>
-              </div>
-            ) : null}
 
-            <div className="button-container">
-
-                <div className="compare-button-container">
-                    <button 
-                        onClick={isCompared ? clearAll : compareFiles}
-                        disabled={testMode ? !selectedDatasetId : (!controlFile && !revisedFile)}
-                        className={`compare-button ${
-                            isCompared ? 'clear-button' : 
-                            testMode ? (selectedDatasetId ? 'ready' : '') :
-                            (controlFile && revisedFile) ? 'ready' :
-                            (controlFile || revisedFile) ? 'partial' : ''
-                        }`}
-                    >
-                        {isCompared ? 'Clear' : 'Compare Files'}
-                    </button>
-                </div>
-            </div>
-
-            {results !== null && (
-                <div className="results-container" ref={resultsContainerRef}>
-                    <div className={`loader-container ${isLoading ? 'fade-in' : 'fade-out'}`}
-                         style={{ display: isLoading ? 'flex' : 'none' }}>
-                        <l-chaotic-orbit
-                            size="85"
-                            speed="2" 
-                            color="var(--text-accent-color)"
-                        ></l-chaotic-orbit>
+                    <div className="button-container">
+                        <div className="compare-button-container">
+                            <button 
+                                onClick={isCompared ? clearAll : compareFiles}
+                                disabled={testMode ? !selectedDatasetId : (!controlFile && !revisedFile)}
+                                className={`compare-button ${
+                                    isCompared ? 'clear-button' : 
+                                    testMode ? (selectedDatasetId ? 'ready' : '') :
+                                    (controlFile && revisedFile) ? 'ready' :
+                                    (controlFile || revisedFile) ? 'partial' : ''
+                                }`}
+                            >
+                                {isCompared ? 'Clear' : 'Compare Files'}
+                            </button>
+                        </div>
                     </div>
+                </div>
 
-                    <div className={`results-content ${!isLoading ? 'fade-in' : 'fade-out'}`}
-                         style={{ display: !isLoading ? 'block' : 'none' }}>
-                        
-                        <div className="timeline-container">
-                            {controlClips.length > 0 && revisedClips.length > 0 && containerWidth && (
-                                <Timeline 
-                                    revisedClips={revisedClips}
-                                    width={containerWidth}
-                                    height={360}
-                                    changes={changes}
-                                    hoveredPosition={hoveredPosition}
-                                    overlappingClips={overlappingClips}
-                                    onHover={(position) => {
-                                        const change = changes.find(c => c.revisedPosition === position)
-                                        handleClipHover(position, change, false)
-                                    }}
-                                    showTooltip={false}
-                                />
-                            )}
+                {results !== null && (
+                    <div className="results-container" ref={resultsContainerRef}>
+                        <div className={`loader-container ${isLoading ? 'fade-in' : 'fade-out'}`}
+                            style={{ display: isLoading ? 'flex' : 'none' }}>
+                            <l-chaotic-orbit
+                                size="85"
+                                speed="2" 
+                                color="var(--text-accent-color)"
+                            ></l-chaotic-orbit>
                         </div>
 
-                        <div className="results-content-wrapper">
-                            {changes.length > 10 && (
-                                <div className="results-list-header">
-                                    <div className="results-list-switch">
-                                        <FormControlLabel
-                                            control={
-                                                <Switch
-                                                    checked={isScrollable}
-                                                    onChange={(e) => setIsScrollable(e.target.checked)}
-                                                    name="scrollable"
-                                                />
-                                            }
-                                            label="Scrollable List"
-                                        />
+                        <div className={`results-content ${!isLoading ? 'fade-in' : 'fade-out'}`}
+                            style={{ display: !isLoading ? 'block' : 'none' }}>
+                            <div className="timeline-container">
+                                {controlClips.length > 0 && revisedClips.length > 0 && containerWidth && (
+                                    <Timeline 
+                                        revisedClips={revisedClips}
+                                        width={containerWidth}
+                                        height={360}
+                                        changes={changes}
+                                        hoveredPosition={hoveredPosition}
+                                        overlappingClips={overlappingClips}
+                                        onHover={(position) => {
+                                            const change = changes.find(c => c.revisedPosition === position)
+                                            handleClipHover(position, change, false)
+                                        }}
+                                        showTooltip={false}
+                                    />
+                                )}
+                            </div>
+
+                            <div className="results-content-wrapper">
+                                {changes.length > 10 && (
+                                    <div className="results-list-header">
+                                        <div className="results-list-switch">
+                                            <FormControlLabel
+                                                control={
+                                                    <Switch
+                                                        checked={isScrollable}
+                                                        onChange={(e) => setIsScrollable(e.target.checked)}
+                                                        name="scrollable"
+                                                    />
+                                                }
+                                                label="Scrollable List"
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                            <div className="middle-column">
-                                <div className="results-timeline-stats">
-                                    <div className="results-duration bordered">
-                                        {(() => {
-                                            const controlDuration = calculateTotalDuration(controlClips)
-                                            const revisedDuration = calculateTotalDuration(revisedClips)
-                                            const durationChange = revisedDuration - controlDuration
-                                            const percentageChange = ((revisedDuration - controlDuration) / controlDuration * 100).toFixed(1)
-                                            const isPositive = durationChange >= 0
-                                            
-                                            return (
-                                                <div className="duration-change"> {/* duration value and change */ }
-                                                    <ClockCountdown size={48} alt="Duration" />
-                                                    <p className={`duration-value ${
-                                                        durationChange === 0 ? 'unchanged' : 
-                                                        durationChange > 0 ? 'positive' : 
-                                                        'negative'
-                                                    }`}>
-                                                        {formatDuration(revisedDuration)}</p>
-                                                    <p>
-                                                        <span className={`duration-value percentage ${
+                                )}
+                                <div className="middle-column">
+                                    <div className="results-timeline-stats">
+                                        <div className="results-duration bordered">
+                                            {(() => {
+                                                const controlDuration = calculateTotalDuration(controlClips)
+                                                const revisedDuration = calculateTotalDuration(revisedClips)
+                                                const durationChange = revisedDuration - controlDuration
+                                                const percentageChange = ((revisedDuration - controlDuration) / controlDuration * 100).toFixed(1)
+                                                const isPositive = durationChange >= 0
+                                                
+                                                return (
+                                                    <div className="duration-change"> {/* duration value and change */ }
+                                                        <ClockCountdown size={48} alt="Duration" />
+                                                        <p className={`duration-value ${
                                                             durationChange === 0 ? 'unchanged' : 
                                                             durationChange > 0 ? 'positive' : 
                                                             'negative'
                                                         }`}>
-                                                            {durationChange === 0 ? (
-                                                                <span className="no-change">(no change)</span>
-                                                            ) : (
-                                                                <>
-                                                                    <span className="duration-change-time">
-                                                                        {`${durationChange > 0 ? '+' : '-'}${formatDuration(durationChange)}`}
-                                                                    </span>
-                                                                    <span className="duration-change-percent">
-                                                                        {`(${percentageChange}%)`}
-                                                                    </span>
-                                                                </>
-                                                            )}
-                                                        </span>
+                                                            {formatDuration(revisedDuration)}</p>
+                                                        <p>
+                                                            <span className={`duration-value percentage ${
+                                                                durationChange === 0 ? 'unchanged' : 
+                                                                durationChange > 0 ? 'positive' : 
+                                                                'negative'
+                                                            }`}>
+                                                                {durationChange === 0 ? (
+                                                                    <span className="no-change">(no change)</span>
+                                                                ) : (
+                                                                    <>
+                                                                        <span className="duration-change-time">
+                                                                            {`${durationChange > 0 ? '+' : '-'}${formatDuration(durationChange)}`}
+                                                                        </span>
+                                                                        <span className="duration-change-percent">
+                                                                            {`(${percentageChange}%)`}
+                                                                        </span>
+                                                                    </>
+                                                                )}
+                                                            </span>
+                                                        </p>
+                                                    </div>
+                                                )
+                                            })()}
+                                        </div>
+                                        <div className="results-data bordered">
+                                            <div className="stat-row">
+                                                <div className="stat-group">
+                                                    <changeIcons.added.icon 
+                                                        size={48}
+                                                        color={changeIcons.added.color}
+                                                    />
+                                                    <p className={`duration-value ${addedCount > 0 ? 'positive' : ''}`}>
+                                                        {addedCount}
                                                     </p>
                                                 </div>
-                                            )
-                                        })()}
-                                    </div>
-                                    <div className="results-data bordered">
-                                        <div className="stat-row">
-                                            <div className="stat-group">
-                                                <changeIcons.added.icon 
-                                                    size={48}
-                                                    color={changeIcons.added.color}
-                                                />
-                                                <p className={`duration-value ${addedCount > 0 ? 'positive' : ''}`}>
-                                                    {addedCount}
-                                                </p>
-                                            </div>
-                                            <div className="stat-group">
-                                                <changeIcons.deleted.icon 
-                                                    size={48}
-                                                    color={changeIcons.deleted.color}
-                                                />
-                                                <p className={`duration-value ${deletedCount > 0 ? 'negative' : ''}`}>
-                                                    {deletedCount}
-                                                </p>
-                                            </div>
-                                            <div className="stat-group">
-                                                <changeIcons.modified.icon 
-                                                    size={48}
-                                                    color={changeIcons.modified.color}
-                                                />
-                                                <p className={`duration-value ${changedCount > 0 ? 'unchanged' : ''}`}>
-                                                    {changedCount}
-                                                </p>
+                                                <div className="stat-group">
+                                                    <changeIcons.deleted.icon 
+                                                        size={48}
+                                                        color={changeIcons.deleted.color}
+                                                    />
+                                                    <p className={`duration-value ${deletedCount > 0 ? 'negative' : ''}`}>
+                                                        {deletedCount}
+                                                    </p>
+                                                </div>
+                                                <div className="stat-group">
+                                                    <changeIcons.modified.icon 
+                                                        size={48}
+                                                        color={changeIcons.modified.color}
+                                                    />
+                                                    <p className={`duration-value ${changedCount > 0 ? 'unchanged' : ''}`}>
+                                                        {changedCount}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div className="results-list-details bordered"
-                                 onMouseEnter={() => {
-                                     // Clear any pending timeout when entering the details panel
-                                     if (hoverTimeout) {
-                                         clearTimeout(hoverTimeout)
-                                         setHoverTimeout(null)
-                                     }
-                                 }}
-                                 onMouseLeave={() => {
-                                     // Start the timeout when leaving the details panel
-                                     const timeout = setTimeout(() => {
-                                         setHoveredPosition(null)
-                                         setActiveClipDetails(null)
-                                     }, 200)
-                                     setHoverTimeout(timeout)
-                                 }}
-                            >
-                                {/* <h4>Clip Details</h4> */}
-                                <div className={`details-content ${activeClipDetails ? '' : 'transitioning'}`}>
-                                    {activeClipDetails ? (
-                                        <>
-                                            <div className="details-row metrics">
-                                                <div className="metric-column">
-                                                    <div className="details-label">Position</div>
-                                                    <div className="details-value">
-                                                        {formatDuration(activeClipDetails.position)}
-                                                    </div>
-                                                </div>
-                                                <div className="metric-column">
-                                                    <div className="details-label">Length</div>
-                                                    <div className="details-value">
-                                                        {formatDuration(activeClipDetails.length)}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            { /*
-                                            <div className="details-row">
-                                                <div className="details-label">Change Type</div>
-                                                <div className="details-value explanation">
-                                                    {activeClipDetails.explanation}
-                                                </div>
-                                            </div>
-                                            */ }
-                                            <div className="details-row">
-                                                <div className="details-label">Explanation</div>
-                                                <div className="details-value explanation">
-                                                    {activeClipDetails.explanation.split('\n').map((line, i) => (
-                                                        <div key={i} className="explanation-line">{line}</div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            <div className="details-row">
-                                                <div className="details-label">Algorithm</div>
-                                                <div className="details-value explanation">
-                                                    {getMethodName(activeClipDetails.method)}
-                                                </div>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div className="details-empty">
-                                            <p>&nbsp;</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="results-list">
-                                <div className={`results-list-content ${isScrollable && changes.length > 9 ? 'scrollable' : ''}`}>
-                                    <ul>
-                                        {changes
-                                            .sort((a, b) => a.revisedPosition - b.revisedPosition)
-                                            .map((change, index) => {
-                                                const changeDescription = (() => {
-                                                    const position = formatDuration(change.revisedPosition)
-                                                    
-                                                    switch (change.type) {
-                                                        case 'added':
-                                                            return `Added clip at ${position}`
-                                                        case 'deleted':
-                                                            return `Deleted clip at ${position}`
-                                                        case 'changed':
-                                                            if (change.detectionMethod === 'fingerprint')
-                                                                return `Clip moved to ${position}`
-                                                            if (change.detectionMethod === 'position')
-                                                                return `Clip position changed to ${position}`
-                                                            if (change.detectionMethod === 'length')
-                                                                return `Clip length changed at ${position}`
-                                                            return `Modified clip at ${position}`
-                                                        default:
-                                                            return `Unknown change at ${position}`
-                                                    }
-                                                })()
-
-                                                        const IconComponent = changeIcons[change.type === 'changed' ? 'modified' : change.type]?.icon || changeIcons.unchanged.icon
-
-                                                return (
-                                                    <li 
-                                                        key={index}
-                                                        data-position={change.revisedPosition.toFixed(2)}
-                                                        onMouseEnter={() => handleClipHover(change.revisedPosition, change, true)}
-                                                        onMouseLeave={() => handleClipHover(null)}
-                                                        className={`result-item ${change.type}${
-                                                            hoveredPosition === change.revisedPosition ? ' hovered' : ''
-                                                        }`}
-                                                    >
-                                                        <div className="icon-wrapper">
-                                                            <IconComponent 
-                                                                size={18} 
-                                                                weight="light"
-                                                                color={changeIcons[change.type === 'changed' ? 'modified' : change.type]?.color || changeIcons.unchanged.color}
-                                                            />
+                                <div className="results-list-details bordered"
+                                    onMouseEnter={() => {
+                                        // Clear any pending timeout when entering the details panel
+                                        if (hoverTimeout) {
+                                            clearTimeout(hoverTimeout)
+                                            setHoverTimeout(null)
+                                        }
+                                    }}
+                                    onMouseLeave={() => {
+                                        // Start the timeout when leaving the details panel
+                                        const timeout = setTimeout(() => {
+                                            setHoveredPosition(null)
+                                            setActiveClipDetails(null)
+                                        }, 200)
+                                        setHoverTimeout(timeout)
+                                    }}
+                                >
+                                    {/* <h4>Clip Details</h4> */}
+                                    <div className={`details-content ${activeClipDetails ? '' : 'transitioning'}`}>
+                                        {activeClipDetails ? (
+                                            <>
+                                                <div className="details-row metrics">
+                                                    <div className="metric-column">
+                                                        <div className="details-label">Position</div>
+                                                        <div className="details-value">
+                                                            {formatDuration(activeClipDetails.position)}
                                                         </div>
-                                                        {changeDescription}
-                                                    </li>
-                                                )
-                                            })}
-                                    </ul>
+                                                    </div>
+                                                    <div className="metric-column">
+                                                        <div className="details-label">Length</div>
+                                                        <div className="details-value">
+                                                            {formatDuration(activeClipDetails.length)}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                { /*
+                                                <div className="details-row">
+                                                    <div className="details-label">Change Type</div>
+                                                    <div className="details-value explanation">
+                                                        {activeClipDetails.explanation}
+                                                    </div>
+                                                </div>
+                                                */ }
+                                                <div className="details-row">
+                                                    <div className="details-label">Explanation</div>
+                                                    <div className="details-value explanation">
+                                                        {activeClipDetails.explanation.split('\n').map((line, i) => (
+                                                            <div key={i} className="explanation-line">{line}</div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div className="details-row">
+                                                    <div className="details-label">Algorithm</div>
+                                                    <div className="details-value explanation">
+                                                        {getMethodName(activeClipDetails.method)}
+                                                    </div>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="details-empty">
+                                                <p>&nbsp;</p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
+
+                                <div className="results-list">
+                                    <div className={`results-list-content ${isScrollable && changes.length > 9 ? 'scrollable' : ''}`}>
+                                        <ul>
+                                            {changes
+                                                .sort((a, b) => a.revisedPosition - b.revisedPosition)
+                                                .map((change, index) => {
+                                                    const changeDescription = (() => {
+                                                        const position = formatDuration(change.revisedPosition)
+                                                        
+                                                        switch (change.type) {
+                                                            case 'added':
+                                                                return `Added clip at ${position}`
+                                                            case 'deleted':
+                                                                return `Deleted clip at ${position}`
+                                                            case 'changed':
+                                                                if (change.detectionMethod === 'fingerprint')
+                                                                    return `Clip moved to ${position}`
+                                                                if (change.detectionMethod === 'position')
+                                                                    return `Clip position changed to ${position}`
+                                                                if (change.detectionMethod === 'length')
+                                                                    return `Clip length changed at ${position}`
+                                                                return `Modified clip at ${position}`
+                                                            default:
+                                                                return `Unknown change at ${position}`
+                                                        }
+                                                    })()
+
+                                                            const IconComponent = changeIcons[change.type === 'changed' ? 'modified' : change.type]?.icon || changeIcons.unchanged.icon
+
+                                                    return (
+                                                        <li 
+                                                            key={index}
+                                                            data-position={change.revisedPosition.toFixed(2)}
+                                                            onMouseEnter={() => handleClipHover(change.revisedPosition, change, true)}
+                                                            onMouseLeave={() => handleClipHover(null)}
+                                                            className={`result-item ${change.type}${
+                                                                hoveredPosition === change.revisedPosition ? ' hovered' : ''
+                                                            }`}
+                                                        >
+                                                            <div className="icon-wrapper">
+                                                                <IconComponent 
+                                                                    size={18} 
+                                                                    weight="light"
+                                                                    color={changeIcons[change.type === 'changed' ? 'modified' : change.type]?.color || changeIcons.unchanged.color}
+                                                                />
+                                                            </div>
+                                                            {changeDescription}
+                                                        </li>
+                                                    )
+                                                })}
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div className="results-divider"></div>
                             </div>
-                            <div className="results-divider"></div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
             </div>
         </div>
     </div>

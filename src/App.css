@@ -145,6 +145,15 @@ body::after {
     font-size: 42px;
 }
 
+.app-title p {
+  font-size: 11px;
+  font-weight: 100;
+  font-style: italic;
+  text-transform: uppercase;
+  color: var(--text-color);
+  padding-left:55px;
+}
+
 .top-banner {
     display: grid;
     grid-template-columns: 81% 17.25%;
@@ -216,7 +225,7 @@ body::after {
     grid-row: 1 / -1;
     background-color: color-mix(in srgb, var(--secondary-bg) 70%, transparent);
     border-radius: 15px;
-    padding: 20px;
+    padding: 0 20px 20px 20px;
     min-height: 100%;
     overflow: hidden;
 }
@@ -392,7 +401,6 @@ body::after {
 
 .results-container {
   position: relative;
-  margin-top: 40px;
   padding: 0px;
   border-radius: 8px;
   width: 100%;
@@ -1183,4 +1191,42 @@ body::after {
     border-bottom: 2px solid var(--border-color-light);
     border-radius: 0 0 8px 8px;
     margin-top: 10px;  /* Add some spacing from content above */
+}
+
+/* Add these new styles after existing .button-container styles */
+.controls-wrapper {
+  max-height: 1000px;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out,
+              opacity 0.3s ease-in-out;
+  margin-top: 20px; /* Add margin to create space below header */
+}
+
+.controls-wrapper.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin: 0;
+}
+
+.collapse-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 200px;
+  height: 40px;
+  margin: 0 auto; /* Change margin to push content down */
+  margin-bottom: 20px;
+  background: var(--tertiary-bg);
+  border: 1px solid var(--text-accent-color);
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+  color: var(--text-accent-color);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.collapse-header:hover {
+  background: var(--secondary-bg);
 }
