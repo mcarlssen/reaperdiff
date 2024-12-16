@@ -11,10 +11,12 @@ import { detectChanges } from './components'
 import { generateAlgorithmTooltip } from './components/helpers/generateAlgorithmTooltip'
 import { testDatasets, getDatasetById } from './testData/index'
 import { chaoticOrbit } from 'ldrs'
-import { ClockCountdown } from "@phosphor-icons/react"
+import { ClockCountdown, FileCsv } from "@phosphor-icons/react"
 import { useVerbose } from './hooks/useVerbose'
 import { changeIcons } from './constants/icons'
 import { CollapseHeader } from './components/helpers/collapseHeaderControl'
+import { TOLERANCE, verbose } from './constants'
+
 
 chaoticOrbit.register()
 
@@ -319,6 +321,50 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('isControlsCollapsed', JSON.stringify(isControlsCollapsed))
   }, [isControlsCollapsed])
+
+  function downloadCSV(changes: Change[], filename: string) {
+    // Define headers based on available properties from Change interface
+    const headers = [
+      'type',
+      'detectionMethod',
+      'revisedPosition',
+      'controlPosition',
+      'controlLength',
+      'controlOffset',
+      'revisedLength',
+      'FILE'
+    ]
+
+    // Convert changes to CSV rows
+    const rows = changes.map(change => [
+      change.type,
+      change.detectionMethod,
+      change.revisedPosition,
+      change.controlPosition || '',
+      change.controlLength || '',
+      change.controlOffset || '',
+      change.revisedLength || '',
+      // We can get the FILE from revisedClips using the revisedPosition
+      revisedClips.find(clip => Math.abs(clip.POSITION - change.revisedPosition) < TOLERANCE)?.FILE || ''
+    ])
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n')
+
+    // Create and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const timestamp = new Date().toISOString().split('T')[0]
+    const fileName = `reaperdiff-${revisedFile?.name || 'results'}-${timestamp}.csv`
+    
+    link.href = URL.createObjectURL(blob)
+    link.download = fileName
+    link.click()
+    URL.revokeObjectURL(link.href)
+  }
 
   return (
     <div className={`app-container ${isFullWidth ? 'full-width' : ''}`}>

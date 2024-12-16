@@ -5,9 +5,9 @@ import './Timeline.css';
 import { Clip, Change } from '../types';
 import { generateTooltip } from './helpers/generateTooltip'
 import { TOLERANCE } from '../constants'
-import { Sparkle, Backspace, ArrowsLeftRight, CirclesThree, ClockCountdown, SpeakerSimpleX } from "@phosphor-icons/react"
 import { changeIcons } from '../constants/icons'
 import { createRoot } from 'react-dom/client'
+//import { FileCsv } from 'react-feather';
 
 interface TimelineProps {
   revisedClips: Clip[];

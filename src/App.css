@@ -1240,3 +1240,19 @@ body::after {
 .collapse-header:hover {
   background: var(--secondary-bg);
 }
+
+.timeline-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.csv-download-icon {
+  color: var(--text-accent-color);
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.csv-download-icon:hover {
+  opacity: 0.8;
+}
