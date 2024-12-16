@@ -14,7 +14,7 @@ import { chaoticOrbit } from 'ldrs'
 import { ClockCountdown } from "@phosphor-icons/react"
 import { useVerbose } from './hooks/useVerbose'
 import { changeIcons } from './constants/icons'
-import { CollapseHeader } from './components/collapse-header'
+import { CollapseHeader } from './components/helpers/collapseHeaderControl'
 
 chaoticOrbit.register()
 
@@ -371,11 +371,7 @@ export default function App() {
                         label="Full Width"
                     />
                 </div>
-            </div>
-        </div>
-        
-        <div className="main-content">
-            <div className="container bordered">
+                
                 {(isControlsCollapsed || results !== null) && (
                     <CollapseHeader 
                         isCollapsed={isControlsCollapsed}
@@ -387,7 +383,11 @@ export default function App() {
                         }}
                     />
                 )}
-
+            </div>
+        </div>
+        
+        <div className="main-content">
+            <div className="container bordered">
                 <div className={`controls-wrapper ${isControlsCollapsed ? 'collapsed' : ''}`}>
                     {testMode && (
                         <div className={`test-mode-indicator ${isCompared ? 'fade-out' : ''}`}>
@@ -436,7 +436,6 @@ export default function App() {
                             </div>
                         </div>
                     )}
-
                     {!testMode && (
                         <div className={`dropzone-container ${isCompared ? 'fade-out' : ''}`}>
                             <div 
@@ -595,7 +594,7 @@ export default function App() {
                                                 <div className="stat-group">
                                                     <changeIcons.added.icon 
                                                         size={48}
-                                                        color={changeIcons.added.color}
+                                                        color={changeIcons.added.color }
                                                     />
                                                     <p className={`duration-value ${addedCount > 0 ? 'positive' : ''}`}>
                                                         {addedCount}

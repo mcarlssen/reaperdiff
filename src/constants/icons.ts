@@ -6,6 +6,7 @@ interface ChangeIcon {
   color: string
   label: string
   class: string
+  alt: string
 }
 
 export const changeIcons: Record<string, ChangeIcon> = {
@@ -13,30 +14,35 @@ export const changeIcons: Record<string, ChangeIcon> = {
     icon: Sparkle,
     color: 'var(--added-clip-color)',
     label: 'Added',
-    class: 'added'
+    class: 'added',
+    alt: 'Added'
   },
   deleted: {
     icon: Backspace,
     color: 'var(--deleted-clip-color)',
     label: 'Deleted',
-    class: 'deleted'
+    class: 'deleted',
+    alt: 'Deleted'
   },
   modified: {
     icon: ArrowsLeftRight,
     color: 'var(--modified-clip-color)',
     label: 'Modified',
-    class: 'modified'
+    class: 'modified',
+    alt: 'Modified'
   },
   unchanged: {
     icon: CirclesThree,
     color: 'var(--unchanged-clip-color)',
     label: 'Static',
-    class: 'unchanged'
+    class: 'unchanged',
+    alt: 'Static'
   },
   silence: {
     icon: SpeakerSimpleX,
     color: 'var(--silence-clip-color)',
     label: 'Silence',
-    class: 'silence'
+    class: 'silence',
+    alt: 'Silence'
   }
 }

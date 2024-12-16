@@ -14,13 +14,13 @@ export function CollapseHeader({ isCollapsed, onToggle }: CollapseHeaderProps) {
     >
       {isCollapsed ? (
         <>
-          <ArrowFatLineDown size={24} />
-          <span>Show Controls</span>
+          <ArrowFatLineDown size={20} />
+          <span>Open Uploader</span>
         </>
       ) : (
         <>
-          <ArrowFatLineUp size={24} />
-          <span>Hide Controls</span>
+          <ArrowFatLineUp size={20} />
+          <span>Close Uploader</span>
         </>
       )}
     </button>
