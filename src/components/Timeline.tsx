@@ -7,7 +7,7 @@ import { generateTooltip } from './helpers/generateTooltip'
 import { TOLERANCE } from '../constants'
 import { changeIcons } from '../constants/icons'
 import { createRoot } from 'react-dom/client'
-//import { FileCsv } from 'react-feather';
+import { FileCsv } from "@phosphor-icons/react"
 
 interface TimelineProps {
   revisedClips: Clip[];
@@ -18,6 +18,8 @@ interface TimelineProps {
   overlappingClips: number[];
   onHover?: (position: number | null) => void;
   showTooltip?: boolean;
+  onDownloadCSV: (changes: Change[], filename: string) => void;
+  revisedFileName?: string;
 }
 
 const legendItems = Object.values(changeIcons)
@@ -45,12 +47,14 @@ export const Timeline: React.FC<TimelineProps> = ({
   hoveredPosition,
   overlappingClips,
   onHover,
-  showTooltip
+  showTooltip,
+  onDownloadCSV,
+  revisedFileName
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
 
   // Main effect for initial render
-  useEffect(() => {
+  useEffect(() => { 
     /*
     console.log('Timeline received clips:', {
       total: revisedClips.length,
@@ -155,73 +159,6 @@ export const Timeline: React.FC<TimelineProps> = ({
         onHover?.(null)
       })
 
-    // Add header group with label and legend
-    const headerGroup = svg.append('g')
-      .attr('class', 'timeline-header')
-      .attr('transform', `translate(0, ${yOffset - 45})`) // controls both the label and legend
-
-    // Add "Revised" label
-    headerGroup.append('text')
-      .attr('class', 'timeline-label')
-      .attr('x', 10)
-      .text('Revised project timeline')
-
-    // Add legend group
-    const legend = headerGroup.append('g')
-      .attr('class', 'timeline-legend')
-      .attr('transform', `translate(${width - 420}, -25)`) // controls the legend position
-
-    // Add legend border
-    legend.append('rect')
-      .attr('class', 'legend-border')
-      .attr('width', 440)
-      .attr('height', 45)
-      .attr('rx', 4)
-
-    // Add legend items
-    const legendItem = legend.selectAll('.legend-item')
-      .data(legendItems)
-      .enter()
-      .append('g')
-      .attr('class', 'legend-item')
-      .attr('transform', (d, i) => `translate(${10 + i * 85}, 7)`)
-
-    legendItem.append('rect')
-      .attr('class', d => `timeline-clip ${d.class}`)
-      .attr('width', 30)
-      .attr('height', 30)
-      .attr('rx', 2)
-
-    // Add foreignObject for icons
-    legendItem.append('foreignObject')
-      .attr('width', 20)
-      .attr('height', 20)
-      .attr('x', 5)
-      .attr('y', 5)
-      .append('xhtml:div')
-      .style('width', '100%')
-      .style('height', '100%')
-      .style('display', 'flex')
-      .style('align-items', 'center')
-      .style('justify-content', 'center')
-      .each(function(d) {
-        const Icon = d.icon
-        const iconElement = <Icon 
-          size={46}
-          color={d.color}
-          weight="bold"
-        />
-        // Create root and render using modern React
-        const root = createRoot(this as HTMLElement)
-        root.render(iconElement)
-      })
-
-    legendItem.append('text')
-      .attr('x', 35)
-      .attr('y', 18)
-      .attr('class', 'legend-text')
-      .text(d => d.label)
-
     // Add time axis
     const xAxis = d3.axisBottom(xScale)
       .ticks(10)
@@ -259,15 +196,48 @@ export const Timeline: React.FC<TimelineProps> = ({
 
   return (
     <div className="timeline-wrapper" style={{ width: '100%' }}>
-      <svg 
-        ref={svgRef}
-        className="timeline-svg bordered"
-        style={{
-          height: height,
-          width: width,
-          transition: 'width 0.5s ease-out'
-        }}
-      />
+      <div className="timeline-header">
+        <div className="timeline-label">
+          <span className="timeline-label-text">Revised project timeline</span>
+          <FileCsv 
+            size={28}
+            className="csv-download-icon"
+            onClick={() => onDownloadCSV(changes, revisedFileName || 'results')}
+          />
+        </div>
+        <div className="timeline-legend">
+          {Object.entries(changeIcons).map(([key, item]) => {
+            const IconComponent = item.icon
+            return (
+              <div key={key} className="legend-item">
+                <div 
+                  className={`legend-color ${item.class}`}
+                  style={{ backgroundColor: item.color }}
+                >
+                  <IconComponent 
+                    size={20}
+                    weight="fill"
+                    color="var(--primary-bg)"
+                    aria-label={item.alt}
+                  />
+                </div>
+                <span className="legend-text">{item.label}</span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+      <div className="timeline-svg-container">
+          <svg 
+            ref={svgRef}
+            className="timeline-svg bordered"
+          style={{
+            height: height,
+            width: width,
+            transition: 'width 0.5s ease-out'
+          }}
+        />
+      </div>
     </div>
   );
 };  

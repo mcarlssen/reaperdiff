@@ -3,11 +3,8 @@
   box-sizing: border-box;
 }
 
-.timeline-label {
-  fill: var(--text-color);
-  font-size: 16px;
-  text-transform: uppercase;
-  font-weight: bold;
+.timeline-svg-container svg{
+  padding:5px;
 }
 
 .timeline-axis {
@@ -66,11 +63,6 @@
   stroke-width: 1px;
 }
 
-.legend-text {
-  fill: var(--text-color);
-  font-size: 12px;
-}
-
 .timeline-legend .timeline-clip {
   filter: none;
 }
@@ -80,35 +72,91 @@
   filter: none;
 }
 
-/* Clip colors - original
-.timeline-clip.unchanged {
-  fill: #44aa44;
-}
-
-.timeline-clip.modified {
-  fill: #ffaa00;
-}
-
-.timeline-clip.added {
-  fill: #ff7044;
-} 
-
-.timeline-clip.deleted {
-    fill: #ff4444;
-} 
-*/
-
-.timeline-legend {
-  transform: translate(${width - 380}, -25);  /* Adjusted for larger icons */
-}
-
-.legend-item {
-  transform: (d, i) => `translate(${10 + i * 75}, 7)`;  /* Adjusted spacing */
-}
-
 .results-container foreignObject svg{
   background:none;
   margin: 0px;
   padding: 0px;
   filter:brightness(1.5);
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0px 10px 20px 10px;
+}
+
+.timeline-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;  /* Space between text and icon */
+  white-space: nowrap;  /* Prevent text wrapping */
+}
+
+.timeline-label-text {
+  width: auto;
+  font-size: 20px;
+  text-transform: uppercase;
+  font-weight: bold;
+  color: var(--text-color);
+  white-space: nowrap;  /* Ensure text stays on one line */
+  display: inline-flex;  /* Keep text and icon aligned */
+}
+
+.timeline-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;  /* Increase gap between legend items */
+  padding: 10px;
+  background: color-mix(in srgb, var(--secondary-bg) 50%, transparent);
+  border: 1px solid var(--primary-bg);
+  border-radius: 4px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;  /* Adjust spacing between icon and text */
+}
+
+.legend-color {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;  /* Set fixed dimensions */
+  height: 26px;
+  border-radius: 4px;
+  background:none;
+}
+
+/* Add specific SVG styling */
+.legend-color svg {
+  background: none;
+  padding: 0;
+
+}
+
+.legend-text {
+  color: var(--text-color);
+  font-size: 12px;
+}
+
+/* Keep existing clip color classes */
+.legend-color.unchanged { /* icon color handled by icon component */ }
+.legend-color.modified { /* icon color handled by icon component */ }
+.legend-color.added { /* icon color handled by icon component */ }
+.legend-color.deleted { /* icon color handled by icon component */ }
+.legend-color.silence { /* icon color handled by icon component */ }
+
+.csv-download-icon {
+  color: var(--text-accent-color);
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  padding: 2px;
+  display: inline-flex;  /* Align icon with text */
+  align-items: center;
+}
+
+.timeline-label span {
+  margin-right: 4px;
 }

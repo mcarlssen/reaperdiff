@@ -562,7 +562,7 @@ export default function App() {
                                     <Timeline 
                                         revisedClips={revisedClips}
                                         width={containerWidth}
-                                        height={360}
+                                        height={300}
                                         changes={changes}
                                         hoveredPosition={hoveredPosition}
                                         overlappingClips={overlappingClips}
@@ -571,6 +571,8 @@ export default function App() {
                                             handleClipHover(position, change, false)
                                         }}
                                         showTooltip={false}
+                                        onDownloadCSV={downloadCSV}
+                                        revisedFileName={revisedFile?.name}
                                     />
                                 )}
                             </div>
