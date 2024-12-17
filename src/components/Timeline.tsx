@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import './Timeline.css';
@@ -7,7 +7,12 @@ import { generateTooltip } from './helpers/generateTooltip'
 import { TOLERANCE } from '../constants'
 import { changeIcons } from '../constants/icons'
 import { createRoot } from 'react-dom/client'
-import { FileCsv } from "@phosphor-icons/react"
+import { FileCsv, Siren } from "@phosphor-icons/react"
+import { toast } from 'react-hot-toast'
+import { sendDatasetEmail } from './helpers/email'
+import { ConfirmationModal } from './ConfirmationModal'
+import { ErrorBoundary } from 'react-error-boundary'
+import { ErrorFallback } from './ErrorFallback'
 
 interface TimelineProps {
   revisedClips: Clip[];
@@ -20,6 +25,7 @@ interface TimelineProps {
   showTooltip?: boolean;
   onDownloadCSV: (changes: Change[], filename: string) => void;
   revisedFileName?: string;
+  controlClips: Clip[];
 }
 
 const legendItems = Object.values(changeIcons)
@@ -41,6 +47,7 @@ const getClipColor = (clip: Clip, changes: Change[]): string => {
 
 export const Timeline: React.FC<TimelineProps> = ({
   revisedClips,
+  controlClips,
   width,
   height,
   changes,
@@ -52,6 +59,7 @@ export const Timeline: React.FC<TimelineProps> = ({
   revisedFileName
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
 
   // Main effect for initial render
   useEffect(() => { 
@@ -194,6 +202,32 @@ export const Timeline: React.FC<TimelineProps> = ({
       })
   }, [hoveredPosition, changes, overlappingClips]);
 
+  const handleAnalysisRequest = async () => {
+    try {
+      // Validate data before sending
+      if (!controlClips?.length || !revisedClips?.length) {
+        toast.error('Missing timeline data')
+        return
+      }
+
+      const result = await sendDatasetEmail({
+        controlData: JSON.stringify(controlClips, null, 2),
+        revisedData: JSON.stringify(revisedClips, null, 2),
+        timestamp: new Date().toISOString()
+      })
+
+      if (result.success) {
+        toast.success('Dataset sent for analysis')
+      } else {
+        toast.error(result.error || 'Failed to send dataset')
+      }
+    } catch (error) {
+      console.error('Analysis request error:', error)
+      toast.error('Failed to process request')
+    }
+    setShowConfirmModal(false)
+  }
+
   return (
     <div className="timeline-wrapper" style={{ width: '100%' }}>
       <div className="timeline-header">
@@ -203,6 +237,13 @@ export const Timeline: React.FC<TimelineProps> = ({
             size={28}
             className="csv-download-icon"
             onClick={() => onDownloadCSV(changes, revisedFileName || 'results')}
+            aria-label="Download CSV"
+          />
+          <Siren 
+            size={28}
+            className="send-for-analysis-icon"
+            onClick={() => setShowConfirmModal(true)}
+            aria-label="Send for analysis"
           />
         </div>
         <div className="timeline-legend">
@@ -238,6 +279,11 @@ export const Timeline: React.FC<TimelineProps> = ({
           }}
         />
       </div>
+      <ConfirmationModal 
+        open={showConfirmModal}
+        onConfirm={handleAnalysisRequest}
+        onCancel={() => setShowConfirmModal(false)}
+      />
     </div>
   );
 };  

@@ -17,7 +17,6 @@ import { changeIcons } from './constants/icons'
 import { CollapseHeader } from './components/helpers/collapseHeaderControl'
 import { TOLERANCE, verbose } from './constants'
 
-
 chaoticOrbit.register()
 
 export default function App() {
@@ -561,6 +560,7 @@ export default function App() {
                                 {controlClips.length > 0 && revisedClips.length > 0 && containerWidth && (
                                     <Timeline 
                                         revisedClips={revisedClips}
+                                        controlClips={controlClips}
                                         width={containerWidth}
                                         height={300}
                                         changes={changes}

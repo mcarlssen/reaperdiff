@@ -157,6 +157,65 @@
   align-items: center;
 }
 
+.csv-download-icon:hover, .send-for-analysis-icon:hover {
+  filter: brightness(1.2);
+}
+
+.send-for-analysis-icon {
+  color: var(--deleted-clip-color);
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  padding: 2px;
+  display: inline-flex;  /* Align icon with text */
+  align-items: center;
+}
+
 .timeline-label span {
   margin-right: 4px;
+}
+
+.confirmation-modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--secondary-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 24px;
+  width: 400px;
+  max-width: 90vw;
+  color: var(--text-color);
+}
+
+.confirmation-modal h2 {
+  margin: 0 0 16px 0;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.confirmation-modal p {
+  margin: 0 0 24px 0;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Style MUI buttons to match your theme */
+.modal-actions .MuiButton-root {
+  text-transform: none;
+  padding: 6px 16px;
+}
+
+.modal-actions .MuiButton-contained {
+  background-color: var(--text-accent-color);
+}
+
+.modal-actions .MuiButton-contained:hover {
+  background-color: color-mix(in srgb, var(--text-accent-color) 80%, white);
 }
