@@ -175,7 +175,7 @@
 }
 
 .confirmation-modal {
-  position: absolute;
+  position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -186,6 +186,9 @@
   width: 400px;
   max-width: 90vw;
   color: var(--text-color);
+  z-index: 1001;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  animation: modalSlideIn 0.3s ease;
 }
 
 .confirmation-modal h2 {
@@ -218,4 +221,39 @@
 
 .modal-actions .MuiButton-contained:hover {
   background-color: color-mix(in srgb, var(--text-accent-color) 80%, white);
+}
+
+/* Add these new styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(4px); /* For Safari */
+  z-index: 1000; /* Make sure this is below your modal z-index */
+  animation: fadeIn 0.2s ease;
+}
+
+/* Add animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translate(-50%, -48%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
 }

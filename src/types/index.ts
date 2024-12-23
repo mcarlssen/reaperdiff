@@ -48,3 +48,8 @@ export interface TestDataset {
     controlData: string
     revisedData: string
   }
+
+export interface ActionResponse {
+  success: boolean
+  error?: string
+}

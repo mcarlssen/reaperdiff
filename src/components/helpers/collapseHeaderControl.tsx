@@ -11,6 +11,7 @@ export function CollapseHeader({ isCollapsed, onToggle }: CollapseHeaderProps) {
       className="collapse-header"
       onClick={onToggle}
       aria-expanded={!isCollapsed}
+      data-state={isCollapsed ? 'collapsed' : 'expanded'}
     >
       {isCollapsed ? (
         <>

@@ -23,3 +23,5 @@ yarn-debug.log*
 yarn-error.log*
 
 readme.md
+.env.local
+.env.*.local
