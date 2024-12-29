@@ -1349,6 +1349,11 @@ body::after {
   align-items: flex-start;  /* Aligns icon to top of paragraph */
 }
 
+.info-modal-list {
+  display: block;
+  padding-bottom:10px;
+}
+
 .info-modal-warning {
   background-color: rgba(235, 47, 0, 0.1);
 }

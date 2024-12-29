@@ -83,12 +83,19 @@ export function InfoModal({ open, onClose, type, onTypeChange }: InfoModalProps)
               type: 'html',
               content: `
                 <p class="info-modal-note"><b>To try out ReaperDiff's features without uploading your own project files, toggle the "Test Mode" switch in the top-right corner.</b></p>
-                <p>ReaperDiff works by comparing changes between two .RPP files, so <b>you will need an 'original' project file, and a 'revised' project file.</b> Drag-and-drop or click on the drop zones to select them from your PC, then click "Compare Files."</p>
-                <p>When the analysis is complete, you'll receive a visual timeline of the changes, color-coded based on the type of changes detected.</p>
-                <p>Below the timeline, you'll find summary stats of the changes, and a scrollable list - hover over any of these to find the corresponding clip on the timeline (and vice versa!).</p>
-                <p>Currently, ReaperDiff detects changes based on a clip's start time, duration, source media offset, source file name, and mute state.</p>
-                <p>To see more information about a specific detection, hover over the clip on the timeline, or its corresponding entry in the list, to see the full details (including the detection algorithm) in the center infobox below the timeline.</p>
-                <p>If the results aren't quite what you expect, click the warning-light icon to email the dataset to us for analysis. This helps us make the tool more useful and reliable! Please note that no PII is collected or stored, and only the minimum data needed from your Reaper project files is submitted for review.</p>
+                <h3>ReaperDiff works by comparing changes between two .RPP files.</h3>
+                <p>Drag-and-drop or click on the drop zones to select an 'original' project file, and a 'revised' project file, then click "Compare Files."</p>
+                <p>ReaperDiff will create a timeline visualization, color-coded to the type of changes detected.</p>
+                <p>Below the timeline, you'll find a list of changes, and summary stats. Hover over an entry to find the corresponding clip on the timeline, and vice versa!.</p>
+                <div class="info-modal-note info-modal-list">
+                  <p><b>ALGORITHM NOTES:</b></p> 
+                  <p>ReaperDiff detects changes based on a clip's start time, duration, source media offset, source file name, and mute state.</p>
+                  <p>The algorithm will ignore all clips and tracks in a MUTED state.</p>
+                  <p>The algorithm has a hard-coded 5ms tolerance, and will not detect changes smaller than this. If you require more precision, please <a href="#" onclick="return false" class="modal-link" data-type="bug">let me know</a>.</p>
+                </div>
+                <p>To see more details about a specific clip's classification, hover over the clip on the timeline, or its corresponding list entry.</p>
+                <p>If the results aren't quite what you expect, click the warning-light icon to email the dataset to us for analysis. This helps us make the tool more useful and reliable!</p>
+                <p class="info-modal-warning">Please note that no PII is ever collected or stored, and only the minimum data necessary from your Reaper project files is submitted for manual review.</p>
                 <p>Lastly, if you discover a bug, please <a href="#" onclick="return false" class="modal-link" data-type="bug">click here</a> to report it!</p>
                 `
             }

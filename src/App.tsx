@@ -97,11 +97,11 @@ export default function App() {
   }
 
   const compareFiles = async () => {
-    console.log('compareFiles called. Current isCompared state:', isCompared)
+    //console.log('compareFiles called. Current isCompared state:', isCompared)
     
     // If comparison has been run, clear everything
     if (isCompared) {
-      console.log('Clearing state because isCompared is true')
+      //console.log('Clearing state because isCompared is true')
       setControlFile(null)
       setRevisedFile(null)
       setControlClips([])
@@ -115,7 +115,7 @@ export default function App() {
       setShowDropzones(true)
       setIsControlsCollapsed(false)
       
-      console.log('State cleared, isCompared set to false')
+      //console.log('State cleared, isCompared set to false')
       return
     }
 
@@ -123,7 +123,7 @@ export default function App() {
     let revisedInput: File | string | null = revisedFile
 
     if (testMode) {
-      console.log('Test mode active, setting up test data')
+      //console.log('Test mode active, setting up test data')
       const dataset = getDatasetById(selectedDatasetId)
       if (!dataset) {
         alert('Please select a test dataset')
@@ -139,7 +139,7 @@ export default function App() {
     }
 
     try {
-      console.log('Starting comparison process')
+      //console.log('Starting comparison process')
       setIsLoading(true)
 
       const result = await detectChanges(
@@ -154,7 +154,7 @@ export default function App() {
         }
       )
       
-      console.log('Comparison completed, updating state')
+      //console.log('Comparison completed, updating state')
       const loadingDuration = calculateLoadingDuration(revisedClips)
       const minimumDuration = 2000 // 2 seconds minimum
       const totalDuration = Math.max(loadingDuration, minimumDuration)
@@ -166,17 +166,17 @@ export default function App() {
       setChanges(result.changes)
       setOverlappingClips(result.overlappingClips)
       setIsCompared(true)
-      console.log('State updated, isCompared set to true')
+      //console.log('State updated, isCompared set to true')
 
       // First, start the fade out of the loader
       setTimeout(() => {
-        console.log('Loading timeout complete, setting isLoading to false')
+        //console.log('Loading timeout complete, setting isLoading to false')
         setIsLoading(false)
       }, totalDuration)
 
     } catch (error) {
-      console.error("Error detecting changes:", error)
-      console.log('Error occurred, setting isLoading to false')
+      //console.error("Error detecting changes:", error)
+      //console.log('Error occurred, setting isLoading to false')
       setIsLoading(false)
     }
   }
@@ -226,7 +226,7 @@ export default function App() {
 
   useEffect(() => {
     if (testMode) {
-      console.log('Test mode effect triggered - testMode is true')
+      //console.log('Test mode effect triggered - testMode is true')
       // Start fade out of dropzones
       setFadeOutDropzones(true)
       setTimeout(() => {
@@ -239,7 +239,7 @@ export default function App() {
         setIsCompared(false)
       }, 200)
     } else {
-      console.log('Test mode effect triggered - testMode is false')
+      //console.log('Test mode effect triggered - testMode is false')
       // Start fade out of test mode
       setFadeOutTestMode(true)
       setTimeout(() => {
@@ -256,7 +256,7 @@ export default function App() {
     if (!testMode) {
       // Show dropzones when controls are expanded, regardless of comparison state
       if (!isControlsCollapsed) {
-        console.log('Controls expanded, showing dropzones')
+        //console.log('Controls expanded, showing dropzones')
         setShowDropzones(true)
         setFadeOutDropzones(false)
       }
@@ -264,11 +264,11 @@ export default function App() {
   }, [isControlsCollapsed, testMode])
 
   useEffect(() => {
-    console.log('fadeOutDropzones changed to:', fadeOutDropzones)
+    //console.log('fadeOutDropzones changed to:', fadeOutDropzones)
   }, [fadeOutDropzones])
 
   useEffect(() => {
-    console.log('fadeOutTestMode changed to:', fadeOutTestMode)
+    //console.log('fadeOutTestMode changed to:', fadeOutTestMode)
   }, [fadeOutTestMode])
 
   function scrollToResult(position: number | null, forceScroll: boolean = false) {
@@ -417,23 +417,6 @@ export default function App() {
 
   // Update the button text based on comparison state
   const compareButtonText = isCompared ? 'Clear' : 'Compare Files'
-
-  // Add an effect to monitor isCompared changes
-  useEffect(() => {
-    console.log('isCompared state changed to:', isCompared)
-  }, [isCompared])
-
-  useEffect(() => {
-    console.log('showDropzones changed to:', showDropzones)
-  }, [showDropzones])
-
-  useEffect(() => {
-    console.log('isControlsCollapsed changed to:', isControlsCollapsed)
-  }, [isControlsCollapsed])
-
-  useEffect(() => {
-    console.log('testMode changed to:', testMode)
-  }, [testMode])
 
   const handleOpenModal = (type: 'about' | 'howto' | 'bug') => {
     setModalType(type)
