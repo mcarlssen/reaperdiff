@@ -1,4 +1,4 @@
-const { default: sgMail } = require('@sendgrid/mail')
+const sgMail = require('@sendgrid/mail')
 const { z } = require('zod')
 
 const bugReportSchema = z.object({
