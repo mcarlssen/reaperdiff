@@ -23,11 +23,13 @@ export function detectMovedClips(
 
     if (potentialMatch && 
         Math.abs(potentialMatch.POSITION - controlClip.POSITION) > TOLERANCE) {
+      /*
       console.log('Found moved clip:', {
         from: controlClip.POSITION,
         to: potentialMatch.POSITION
       })
-
+      */
+     
       // This is a moved clip
       movedClips.set(potentialMatch.POSITION, {
         revisedPosition: potentialMatch.POSITION,

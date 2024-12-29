@@ -11,12 +11,14 @@ import { detectChanges } from './components'
 import { generateAlgorithmTooltip } from './components/helpers/generateAlgorithmTooltip'
 import { testDatasets, getDatasetById } from './testData/index'
 import { chaoticOrbit } from 'ldrs'
-import { ClockCountdown, FileCsv } from "@phosphor-icons/react"
+import { ClockCountdown, FileCsv, Info, Question, Warning } from "@phosphor-icons/react"
 import { useVerbose } from './hooks/useVerbose'
 import { changeIcons } from './constants/icons'
 import { CollapseHeader } from './components/helpers/collapseHeaderControl'
 import { TOLERANCE, verbose } from './constants'
 import { Toaster } from 'react-hot-toast'
+import { InfoModal } from './components/InfoModal'
+import { Analytics } from "@vercel/analytics/react"
 
 chaoticOrbit.register()
 
@@ -52,14 +54,9 @@ export default function App() {
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null)
   const lastPosition = useRef<number | null>(null)
   const [isVerbose, setVerbose] = useVerbose(true)
-  const [isControlsCollapsed, setIsControlsCollapsed] = useState(() => {
-    try {
-      const stored = localStorage.getItem('isControlsCollapsed')
-      return stored ? JSON.parse(stored) : false
-    } catch {
-      return false
-    }
-  })
+  const [isControlsCollapsed, setIsControlsCollapsed] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalType, setModalType] = useState<'about' | 'howto' | 'bug' | null>(null)
 
   useEffect(() => {
     if (resultsContainerRef.current) {
@@ -100,10 +97,33 @@ export default function App() {
   }
 
   const compareFiles = async () => {
+    console.log('compareFiles called. Current isCompared state:', isCompared)
+    
+    // If comparison has been run, clear everything
+    if (isCompared) {
+      console.log('Clearing state because isCompared is true')
+      setControlFile(null)
+      setRevisedFile(null)
+      setControlClips([])
+      setRevisedClips([])
+      setResults(null)
+      setChanges([])
+      setOverlappingClips([])
+      setIsCompared(false)
+      
+      // Ensure dropzones are visible and uploader is expanded
+      setShowDropzones(true)
+      setIsControlsCollapsed(false)
+      
+      console.log('State cleared, isCompared set to false')
+      return
+    }
+
     let controlInput: File | string | null = controlFile
     let revisedInput: File | string | null = revisedFile
 
     if (testMode) {
+      console.log('Test mode active, setting up test data')
       const dataset = getDatasetById(selectedDatasetId)
       if (!dataset) {
         alert('Please select a test dataset')
@@ -119,7 +139,7 @@ export default function App() {
     }
 
     try {
-      // Start loading state
+      console.log('Starting comparison process')
       setIsLoading(true)
 
       const result = await detectChanges(
@@ -134,7 +154,7 @@ export default function App() {
         }
       )
       
-      // Calculate and apply loading duration
+      console.log('Comparison completed, updating state')
       const loadingDuration = calculateLoadingDuration(revisedClips)
       const minimumDuration = 2000 // 2 seconds minimum
       const totalDuration = Math.max(loadingDuration, minimumDuration)
@@ -146,14 +166,17 @@ export default function App() {
       setChanges(result.changes)
       setOverlappingClips(result.overlappingClips)
       setIsCompared(true)
+      console.log('State updated, isCompared set to true')
 
       // First, start the fade out of the loader
       setTimeout(() => {
+        console.log('Loading timeout complete, setting isLoading to false')
         setIsLoading(false)
       }, totalDuration)
 
     } catch (error) {
       console.error("Error detecting changes:", error)
+      console.log('Error occurred, setting isLoading to false')
       setIsLoading(false)
     }
   }
@@ -177,7 +200,7 @@ export default function App() {
       'application/x-reaper-project': ['.rpp']
     },
     multiple: false,
-    disabled: testMode,
+    disabled: testMode || isCompared,
   });
 
   const { getRootProps: getRevisedRootProps, getInputProps: getRevisedInputProps, isDragActive: isRevisedDragActive } = useDropzone({
@@ -185,7 +208,8 @@ export default function App() {
     accept: {
       'application/x-reaper-project': ['.rpp']
     },
-    multiple: false
+    multiple: false,
+    disabled: testMode || isCompared,
   });
 
   useEffect(() => {
@@ -202,29 +226,50 @@ export default function App() {
 
   useEffect(() => {
     if (testMode) {
+      console.log('Test mode effect triggered - testMode is true')
       // Start fade out of dropzones
-      setFadeOutDropzones(true);
+      setFadeOutDropzones(true)
       setTimeout(() => {
-        setShowDropzones(false);
-        setFadeOutDropzones(false);
-        setShowTestMode(true);
+        setShowDropzones(false)
+        setFadeOutDropzones(false)
+        setShowTestMode(true)
         // Clear files after transition
-        setControlFile(null);
-        setRevisedFile(null);
-        setIsCompared(false);
-      }, 200);
+        setControlFile(null)
+        setRevisedFile(null)
+        setIsCompared(false)
+      }, 200)
     } else {
+      console.log('Test mode effect triggered - testMode is false')
       // Start fade out of test mode
-      setFadeOutTestMode(true);
+      setFadeOutTestMode(true)
       setTimeout(() => {
-        setShowTestMode(false);
-        setFadeOutTestMode(false);
-        setShowDropzones(true);
-        setIsCompared(false);
-        clearAll();
-      }, 200);
+        setShowTestMode(false)
+        setFadeOutTestMode(false)
+        setShowDropzones(true)
+        setIsCompared(false)
+        clearAll()
+      }, 200)
     }
-  }, [testMode]);
+  }, [testMode])
+
+  useEffect(() => {
+    if (!testMode) {
+      // Show dropzones when controls are expanded, regardless of comparison state
+      if (!isControlsCollapsed) {
+        console.log('Controls expanded, showing dropzones')
+        setShowDropzones(true)
+        setFadeOutDropzones(false)
+      }
+    }
+  }, [isControlsCollapsed, testMode])
+
+  useEffect(() => {
+    console.log('fadeOutDropzones changed to:', fadeOutDropzones)
+  }, [fadeOutDropzones])
+
+  useEffect(() => {
+    console.log('fadeOutTestMode changed to:', fadeOutTestMode)
+  }, [fadeOutTestMode])
 
   function scrollToResult(position: number | null, forceScroll: boolean = false) {
     if (position === null) return
@@ -315,17 +360,12 @@ export default function App() {
   const changedCount = changes.filter(change => change.type === 'changed').length
 
   useEffect(() => {
-    if (results !== null) {
+    if (results !== null && isCompared) {
       setTimeout(() => {
         setIsControlsCollapsed(true)
-        localStorage.setItem('isControlsCollapsed', 'true')
       }, 300)
     }
-  }, [results])
-
-  useEffect(() => {
-    localStorage.setItem('isControlsCollapsed', JSON.stringify(isControlsCollapsed))
-  }, [isControlsCollapsed])
+  }, [results, isCompared])
 
   useEffect(() => {
     //console.log('Controls collapsed state:', isControlsCollapsed)
@@ -375,8 +415,34 @@ export default function App() {
     URL.revokeObjectURL(link.href)
   }
 
+  // Update the button text based on comparison state
+  const compareButtonText = isCompared ? 'Clear' : 'Compare Files'
+
+  // Add an effect to monitor isCompared changes
+  useEffect(() => {
+    console.log('isCompared state changed to:', isCompared)
+  }, [isCompared])
+
+  useEffect(() => {
+    console.log('showDropzones changed to:', showDropzones)
+  }, [showDropzones])
+
+  useEffect(() => {
+    console.log('isControlsCollapsed changed to:', isControlsCollapsed)
+  }, [isControlsCollapsed])
+
+  useEffect(() => {
+    console.log('testMode changed to:', testMode)
+  }, [testMode])
+
+  const handleOpenModal = (type: 'about' | 'howto' | 'bug') => {
+    setModalType(type)
+    setModalOpen(true)
+  }
+
   return (
     <>
+      <Analytics />
       <Toaster
         position="top-center"
         reverseOrder={false}
@@ -430,9 +496,24 @@ export default function App() {
               <p>Diff-style .RPP Comparison and sanity checker</p>
             </div>
             <div className="header-links">
-              <h2>
-                about&nbsp;&nbsp;&nbsp;&nbsp;how to
-              </h2>
+              <button 
+                className="header-link" 
+                onClick={() => handleOpenModal('about')}
+              >
+                <Info size={40} weight="fill" />
+              </button>
+              <button 
+                className="header-link" 
+                onClick={() => handleOpenModal('howto')}
+              >
+                <Question size={40} weight="fill" />
+              </button>
+              <button 
+                className="header-link" 
+                onClick={() => handleOpenModal('bug')}
+              >
+                <Warning size={40} weight="fill" />
+              </button>
             </div>
           </div>
           <div className="banner-right bordered">
@@ -478,9 +559,6 @@ export default function App() {
                 isCollapsed={isControlsCollapsed}
                 onToggle={() => {
                   setIsControlsCollapsed(!isControlsCollapsed)
-                  if (isControlsCollapsed) {
-                    setIsCompared(false)
-                  }
                 }}
               />
             )}
@@ -496,7 +574,7 @@ export default function App() {
                 </div>
               )}
               {testMode && (
-                <div className={`test-mode-indicator ${isCompared ? 'fade-out' : ''}`}>
+                <div className="test-mode-indicator">
                   <div className="test-mode-content">
                     <h3>TEST MODE</h3>
                     {datasetError ? (
@@ -543,44 +621,44 @@ export default function App() {
                 </div>
               )}
               {!testMode && (
-                <div className={`dropzone-container ${isCompared ? 'fade-out' : ''}`}>
+                <div className="dropzone-container">
                   <div 
                     className={`dropzone ${controlFile ? 'has-file' : ''} ${
-                      testMode ? 'disabled' : ''
+                      testMode || isCompared ? 'disabled' : ''
                     }`} 
-                    {...getControlRootProps({ disabled: testMode })}
+                    {...getControlRootProps({ disabled: testMode || isCompared })}
                   >
                     <input {...getControlInputProps()} />
                     {controlFile ? (
-                      <p>Selected: <span className="file-type">{controlFile.name}</span></p>
+                      <div className="dropzone-content">
+                        <h2>Original</h2>
+                        <p><span className="file-type">{controlFile.name}</span></p>
+                      </div>
                     ) : (
-                      <p>
-                        {isControlDragActive ? (
-                          <>Drop <span className="dropzone-text-emphasis">control</span> file here</>
-                        ) : (
-                          <>Drop <span className="file-type">control</span> .rpp file here, or click to select</>
-                        )}
-                      </p>
+                      <div className="dropzone-content">
+                        <h2>Original</h2>
+                        <p>{isControlDragActive ? 'Drop file here' : 'Drag & drop or click to select'}</p>
+                      </div>
                     )}
                   </div>
 
                   <div 
                     className={`dropzone ${revisedFile ? 'has-file' : ''} ${
-                      testMode ? 'disabled' : ''
+                      testMode || isCompared ? 'disabled' : ''
                     }`} 
-                    {...getRevisedRootProps({ disabled: testMode })}
+                    {...getRevisedRootProps({ disabled: testMode || isCompared })}
                   >
                     <input {...getRevisedInputProps()} />
                     {revisedFile ? (
-                      <p>Selected: <span className="file-type">{revisedFile.name}</span></p>
+                      <div className="dropzone-content">
+                        <h2>Revised</h2>
+                        <p><span className="file-type">{revisedFile.name}</span></p>
+                      </div>
                     ) : (
-                      <p>
-                        {isRevisedDragActive ? (
-                          <span className="dropzone-text-emphasis">Drop file here</span>
-                        ) : (
-                          <>Drop <span className="file-type">revised</span> .rpp file here, or click to select</>
-                        )}
-                      </p>
+                      <div className="dropzone-content">
+                        <h2>Revised</h2>
+                        <p>{isRevisedDragActive ? 'Drop file here' : 'Drag & drop or click to select'}</p>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -589,8 +667,8 @@ export default function App() {
               <div className="button-container">
                 <div className="compare-button-container">
                   <button 
-                    onClick={isCompared ? clearAll : compareFiles}
-                    disabled={testMode ? !selectedDatasetId : (!controlFile && !revisedFile)}
+                    onClick={compareFiles}
+                    disabled={isLoading || (!testMode && (!controlFile || !revisedFile))}
                     className={`compare-button ${
                       isCompared ? 'clear-button' : 
                       testMode ? (selectedDatasetId ? 'ready' : '') :
@@ -598,7 +676,11 @@ export default function App() {
                       (controlFile || revisedFile) ? 'partial' : ''
                     }`}
                   >
-                    {isCompared ? 'Clear' : 'Compare Files'}
+                    {isLoading ? (
+                      <div className="loader-container">
+                        <div className="loader"></div>
+                      </div>
+                    ) : compareButtonText}
                   </button>
                 </div>
               </div>
@@ -858,6 +940,15 @@ export default function App() {
           </div>
         </div>
       </div>
+      <InfoModal 
+        open={modalOpen} 
+        onClose={() => {
+          setModalOpen(false)
+          setModalType(null)
+        }} 
+        type={modalType}
+        onTypeChange={(newType) => setModalType(newType)}
+      />
     </>
   );
 }

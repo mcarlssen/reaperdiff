@@ -15,6 +15,12 @@ const emailSchema = z.object({
   timestamp: z.string()
 })
 
+const bugReportSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().min(1, 'Description is required'),
+  timestamp: z.string()
+})
+
 app.post('/api/send-email', async (req, res) => {
   try {
     // Debug log environment variables (redact sensitive info)
@@ -73,7 +79,56 @@ app.post('/api/send-email', async (req, res) => {
   }
 })
 
+app.post('/api/send-bug-report', async (req, res) => {
+  try {
+    // Validate input
+    const validatedData = bugReportSchema.parse(req.body)
+    
+    const apiKey = process.env.REACT_APP_SENDGRID_API_KEY
+    const fromEmail = process.env.REACT_APP_SENDGRID_FROM_EMAIL
+
+    if (!apiKey || !apiKey.startsWith('SG.')) {
+      throw new Error('Invalid SendGrid API key')
+    }
+
+    if (!fromEmail) {
+      throw new Error('SendGrid from email is not configured')
+    }
+
+    // Initialize SendGrid
+    sgMail.setApiKey(apiKey)
+
+    const msg = {
+      to: 'magnus@carlssen.co.uk',
+      from: fromEmail,
+      subject: 'ReaperDiff Bug Report',
+      text: `
+Bug Report from ${validatedData.name}
+Submitted: ${validatedData.timestamp}
+
+Description:
+${validatedData.description}
+      `,
+      html: `
+        <h2>Bug Report from ${validatedData.name}</h2>
+        <p><strong>Submitted:</strong> ${validatedData.timestamp}</p>
+        <h3>Description:</h3>
+        <p>${validatedData.description.replace(/\n/g, '<br>')}</p>
+      `
+    }
+
+    await sgMail.send(msg)
+    res.json({ success: true })
+  } catch (error) {
+    console.error('Bug report error:', error)
+    res.status(500).json({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to send bug report'
+    })
+  }
+})
+
 const port = process.env.PORT || 3001
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`)
+  console.log(`Server running on port ${port}`)  
 })
