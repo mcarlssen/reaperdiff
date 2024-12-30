@@ -154,6 +154,11 @@ body::after {
   padding-left:55px;
 }
 
+.app-title svg {
+    position: relative;
+    top: 5px;
+}
+
 .top-banner {
     display: grid;
     grid-template-columns: 81% 17.25%;
@@ -1455,4 +1460,44 @@ body::after {
 
 .large-feature p {
     font-size: 1rem;
+}
+
+.screen-size-warning {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--secondary-bg);
+    padding: 24px;
+    border-radius: 12px;
+    text-align: center;
+    max-width: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    z-index: 1000;
+}
+
+.screen-size-warning svg {
+    color: var(--text-accent-color);
+}
+
+.screen-size-warning p {
+    color: var(--text-color);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.screen-size-warning .app-title p {
+    font-size: 0.8rem;
+}
+
+.screen-size-warning .app-title {
+    padding-bottom:20px;
+}
+
+.screen-size-warning .current-width {
+    font-size: 0.9rem;
+    color: var(--text-color-dark);
 }
