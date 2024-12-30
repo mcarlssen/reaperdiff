@@ -234,6 +234,8 @@ body::after {
     padding: 0 20px 20px 20px;
     min-height: 100%;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 /* drop zone styles */
@@ -1351,7 +1353,7 @@ body::after {
 
 .info-modal-list {
   display: block;
-  padding-bottom:10px;
+  margin-bottom:10px;
 }
 
 .info-modal-warning {
@@ -1365,6 +1367,11 @@ body::after {
 
 .info-modal-icon svg {
   display: block;  /* Ensures proper icon alignment */
+}
+
+.info-modal-list li {
+  margin-left: 15px;
+  margin-bottom: 10px;
 }
 
 .info-modal-form-group {
@@ -1402,4 +1409,50 @@ body::after {
   outline: none;
   border-color: var(--text-accent-color); /* This is your yellow color: #ebb400 */
   box-shadow: 0 0 0 1px var(--text-accent-color);
+}
+
+/* Add these new styles after the .container class */
+
+.features-container {
+    max-width: 1450px;
+    width: 100%;
+    margin: auto auto 50px auto;
+    display: grid;
+    grid-template-columns: 3fr 4fr 3fr;
+    gap: 20px;
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.feature-box {
+    height: fit-content;  /* Changed from fixed height */
+    min-height: 200px;    /* Optional: adds a minimum height */
+    background-color: color-mix(in srgb, var(--tertiary-bg) 70%, transparent);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.feature-box h3 {
+    color: var(--text-accent-color);
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+}
+
+.feature-box p {
+    color: var(--text-color);
+    font-size: 1rem;
+    line-height: 1.4;
+    margin-bottom: 10px;
+    font-style: italic;
+}
+
+.feature-box li {
+    margin-bottom: 5px;
+    margin-left: 15px;
+    font-size: .8rem;
+}
+
+.large-feature p {
+    font-size: 1rem;
 }

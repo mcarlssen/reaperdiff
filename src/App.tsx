@@ -669,6 +669,31 @@ export default function App() {
               </div>
             </div>
 
+            {!isCompared && (
+              <div className="features-container">
+                <div className="feature-box large-feature">
+                  <h3>Fast and Simple</h3>
+                  <p>Get a sanity check on your project files in seconds, and avoid time-consuming audible review.</p>
+                </div>
+                <div className="feature-box">
+                  <h3>Smart Detection</h3>
+                  <p>ReaperDiff analyzes 5 metadata tags on every clip, running 6 algorithms on each uploaded project file:</p>
+                  <ul>
+                    <li>Clip fingerprinting</li>
+                    <li>Position shifts</li>
+                    <li>Length or offset changes</li>
+                    <li>Clip splits</li>
+                    <li>Overlaps and silence gaps</li>
+                  </ul>
+                </div>
+                <div className="feature-box large-feature">
+                  <h3>Privacy First</h3>
+                  <p>Uploaded project files are never stored or cached, and only the minimum clip data necessary is used for analysis.</p>
+                  <p></p>
+                </div>
+              </div>
+            )}
+
             {results !== null && (
               <div className="results-container" ref={resultsContainerRef}>
                 <div className={`loader-container ${isLoading ? 'fade-in' : 'fade-out'}`}

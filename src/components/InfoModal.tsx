@@ -87,14 +87,16 @@ export function InfoModal({ open, onClose, type, onTypeChange }: InfoModalProps)
                 <p>Drag-and-drop or click on the drop zones to select an 'original' project file, and a 'revised' project file, then click "Compare Files."</p>
                 <p>ReaperDiff will create a timeline visualization, color-coded to the type of changes detected.</p>
                 <p>Below the timeline, you'll find a list of changes, and summary stats. Hover over an entry to find the corresponding clip on the timeline, and vice versa!.</p>
-                <div class="info-modal-note info-modal-list">
-                  <p><b>ALGORITHM NOTES:</b></p> 
-                  <p>ReaperDiff detects changes based on a clip's start time, duration, source media offset, source file name, and mute state.</p>
-                  <p>The algorithm will ignore all clips and tracks in a MUTED state.</p>
-                  <p>The algorithm has a hard-coded 5ms tolerance, and will not detect changes smaller than this. If you require more precision, please <a href="#" onclick="return false" class="modal-link" data-type="bug">let me know</a>.</p>
-                </div>
                 <p>To see more details about a specific clip's classification, hover over the clip on the timeline, or its corresponding list entry.</p>
                 <p>If the results aren't quite what you expect, click the warning-light icon to email the dataset to us for analysis. This helps us make the tool more useful and reliable!</p>
+                <div class="info-modal-note info-modal-list">
+                  <p><b>ALGORITHM NOTES:</b></p> 
+                  <p><ul>
+                  <li>ReaperDiff detects changes based on a clip's start time, duration, source media offset, source file name, and mute state.</li>
+                  <li>The algorithm will ignore all clips and tracks in a MUTED state.</li>
+                  <li>The algorithm has a hard-coded 5ms tolerance, and will not detect changes smaller than this. If you require more precision, please <a href="#" onclick="return false" class="modal-link" data-type="bug">let me know</a>.</li>
+                  </ul></p>
+                </div>
                 <p class="info-modal-warning">Please note that no PII is ever collected or stored, and only the minimum data necessary from your Reaper project files is submitted for manual review.</p>
                 <p>Lastly, if you discover a bug, please <a href="#" onclick="return false" class="modal-link" data-type="bug">click here</a> to report it!</p>
                 `
