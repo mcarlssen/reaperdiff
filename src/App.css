@@ -87,7 +87,7 @@ body::before {
     z-index: -2;
     
     /* Update background styles for sliding effect */
-    background-image: url('../public/background-gradient-seamless.png');
+    background-image: url('../public/background-gradient-seamless.webp');
     background-position: center;
     background-repeat: none;  /* Only repeat horizontally */
     background-size: 100% 100%;  /* Make background twice as wide */
