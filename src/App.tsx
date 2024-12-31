@@ -700,7 +700,7 @@ export default function App() {
                     </div>
                     <div className="feature-box">
                       <h3>Smart Detection</h3>
-                      <p>ReaperDiff analyzes 5 metadata tags on every clip, running 6 algorithms on each uploaded project file:</p>
+                      <p>ReaperDiff analyzes 5+ metadata tags on every clip, running multiple algorithms on each uploaded project file, including:</p>
                       <ul>
                         <li>Clip fingerprinting</li>
                         <li>Position shifts</li>
