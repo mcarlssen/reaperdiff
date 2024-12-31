@@ -181,7 +181,6 @@ export default function App() {
         //console.log('Loading timeout complete, setting isLoading to false')
         setIsLoading(false)
       }, totalDuration)
-
     } catch (error) {
       //console.error("Error detecting changes:", error)
       //console.log('Error occurred, setting isLoading to false')
@@ -970,6 +969,10 @@ export default function App() {
                   </div>
                 )}
               </div>
+            </div>
+
+            <div className="app-footer">
+              <p>Mischief managed by <a href="https://github.com/mcarlssen" target="_blank">Magnus Carlssen</a>. Iconography by <a href="https://phosphoricons.com" target="_blank">PhosphorIcons</a>. Background by <a href="https://www.danield.design/" target="_blank">Photo Gradient/Daniel D.</a>. Loaders by <a href="https://uiball.com/ldrs/" target="_blank">Griffin Johnston</a>.</p>
             </div>
           </>
         )}
